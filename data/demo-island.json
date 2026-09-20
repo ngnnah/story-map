@@ -1,0 +1,63 @@
+{
+  "id": "demo-island",
+  "title": "The Salt Road",
+  "author": "demo fixture",
+  "map": {
+    "name": "Cauldry Island",
+    "aspect": 0.7,
+    "hint": "Any landscape image works; coords are fractions of the image, not pixels."
+  },
+  "pages": [1, 96],
+
+  "places": {
+    "harbor-town": { "name": "Harbor Town", "x": 0.20, "y": 0.72 },
+    "old-mill":    { "name": "Old Mill",    "x": 0.35, "y": 0.50 },
+    "north-keep":  { "name": "North Keep",  "x": 0.48, "y": 0.18 },
+    "salt-marsh":  { "name": "Salt Marsh",  "x": 0.70, "y": 0.62 },
+    "lighthouse":  { "name": "Lighthouse",  "x": 0.88, "y": 0.35 }
+  },
+
+  "routes": [
+    {
+      "from": "old-mill",
+      "to": "north-keep",
+      "via": [[0.33, 0.36], [0.40, 0.26]]
+    }
+  ],
+
+  "characters": [
+    { "id": "mira",  "name": "Mira",  "color": "#d4a24c", "role": "the miller's daughter" },
+    { "id": "corin", "name": "Corin", "color": "#5b8fb9", "role": "lightkeeper" },
+    { "id": "tam",   "name": "Tam",   "color": "#9a6fb0", "role": "the boy who ran" }
+  ],
+
+  "chapters": [
+    { "n": 1, "startPage": 1,  "title": "Low Tide" },
+    { "n": 2, "startPage": 20, "title": "The Miller's Debt" },
+    { "n": 3, "startPage": 45, "title": "Up the Ridge" },
+    { "n": 4, "startPage": 70, "title": "What the Light Kept" }
+  ],
+
+  "waypoints": [
+    { "who": ["mira", "tam"], "page": 1,  "place": "harbor-town", "note": "the boats come back empty" },
+    { "who": ["mira", "tam"], "page": 20, "place": "harbor-town" },
+    { "who": ["mira", "tam"], "page": 32, "place": "old-mill",    "note": "they walk up together" },
+
+    { "who": "mira", "page": 45, "place": "old-mill" },
+    { "who": "mira", "page": 60, "place": "north-keep", "note": "the long way round the ridge" },
+    { "who": "mira", "page": 75, "place": "north-keep" },
+    { "who": "mira", "page": 88, "place": "old-mill",   "note": "back down the same road" },
+    { "who": "mira", "page": 96, "place": "old-mill" },
+
+    { "who": "tam", "page": 40, "place": "old-mill" },
+    { "who": "tam", "page": 58, "place": "salt-marsh" },
+    { "who": "tam", "page": 66, "place": null, "note": "walks into the marsh and is not seen again" },
+
+    { "who": "corin", "page": 20, "place": "salt-marsh", "note": "first sight of him" },
+    { "who": "corin", "page": 38, "place": "lighthouse" },
+    { "who": "corin", "page": 55, "place": "lighthouse" },
+    { "who": "corin", "page": 62, "place": "salt-marsh" },
+    { "who": "corin", "page": 66, "place": "salt-marsh", "note": "he was there too" },
+    { "who": "corin", "page": 80, "place": "old-mill" }
+  ]
+}

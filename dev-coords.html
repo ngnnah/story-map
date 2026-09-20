@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Map — coord picker</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1c1f25;
+    --line: #2b3038;
+    --ink: #e6e3dd;
+    --dim: #8d95a3;
+    --accent: #d4a24c;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: grid; grid-template-rows: auto 1fr; overflow: hidden;
+  }
+  header {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  header h1 { font-size: 14px; font-weight: 600; margin: 0 8px 0 0; letter-spacing: .02em; }
+  header .hint { color: var(--dim); font-size: 12px; }
+  button, label.btn, select {
+    background: #262a31; color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  button:hover, label.btn:hover { border-color: #3d444f; }
+  button.on { background: var(--accent); color: #17191d; border-color: var(--accent); }
+  input[type=file] { display: none; }
+
+  main { display: grid; grid-template-columns: 1fr 380px; min-height: 0; }
+  #viewport { position: relative; overflow: hidden; background: #0f1114; cursor: crosshair; }
+  #viewport.panning { cursor: grabbing; }
+  #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+  #stage img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
+  #stage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+  aside {
+    border-left: 1px solid var(--line); background: var(--panel);
+    display: grid; grid-template-rows: auto auto 1fr auto; min-height: 0; padding: 12px; gap: 10px;
+  }
+  aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 0; font-weight: 600; }
+  textarea {
+    width: 100%; height: 100%; resize: none; background: #121418; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; padding: 10px;
+    font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre;
+  }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row input[type=text] {
+    flex: 1; background: #121418; color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 13px;
+  }
+  .empty {
+    position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
+    color: var(--dim); gap: 10px; padding: 40px;
+  }
+  .empty strong { color: var(--ink); font-size: 16px; display: block; margin-bottom: 4px; }
+  .place-dot { cursor: grab; }
+  .place-dot:active { cursor: grabbing; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Coord picker</h1>
+  <label class="btn">Map image<input type="file" id="pick-image" accept="image/*"></label>
+  <label class="btn">Load book.json<input type="file" id="pick-book" accept=".json,application/json"></label>
+  <button id="mode-place" class="on">Place</button>
+  <button id="mode-route">Route</button>
+  <button id="undo">Undo</button>
+  <button id="fit">Fit</button>
+  <span class="hint" id="status">click the map to drop a place</span>
+</header>
+
+<main>
+  <div id="viewport">
+    <div id="stage" hidden>
+      <img id="map" alt="">
+      <svg id="overlay" preserveAspectRatio="none">
+        <g id="routes-g"></g>
+        <g id="places-g"></g>
+      </svg>
+    </div>
+    <div class="empty" id="empty">
+      <div><strong>No map loaded</strong>Pick a map image to start dropping places.</div>
+      <div style="font-size:12px">It is stored locally and never uploaded.</div>
+    </div>
+  </div>
+
+  <aside>
+    <h2>New place</h2>
+    <div class="row">
+      <input type="text" id="new-name" placeholder="Name, e.g. Culhaven — then click the map">
+    </div>
+    <textarea id="out" spellcheck="false" readonly></textarea>
+    <div class="row">
+      <button id="copy">Copy JSON</button>
+      <span class="hint" id="counts"></span>
+    </div>
+  </aside>
+</main>
+
+<script type="module">
+import { putImage, getImage, pref, setPref } from './js/store.js';
+
+const KEY = 'dev-coords';                 // the picker keeps its own image slot
+const $ = (id) => document.getElementById(id);
+
+const viewport = $('viewport');
+const stage = $('stage');
+const img = $('map');
+const overlay = $('overlay');
+const routesG = $('routes-g');
+const placesG = $('places-g');
+
+const SVG_W = 1000;
+let aspect = 0.7;
+let baseW = 0, baseH = 0;
+let view = { s: 1, tx: 0, ty: 0 };
+let mode = 'place';
+let places = pref('coords.places', {});   // id -> {name, x, y}
+let routes = pref('coords.routes', []);   // {from, to, via:[[x,y]]}
+let routeDraft = null;                    // {from, via:[]}
+const undoStack = [];
+
+// --- image -----------------------------------------------------------------
+
+async function useBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  img.src = url;
+  await img.decode().catch(() => {});
+  aspect = img.naturalHeight / img.naturalWidth;
+  overlay.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_W * aspect}`);
+  stage.hidden = false;
+  $('empty').hidden = true;
+  fit();
+}
+
+$('pick-image').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  await putImage(KEY, file);
+  await useBlob(file);
+  say(`loaded ${file.name} (${img.naturalWidth}×${img.naturalHeight})`);
+});
+
+$('pick-book').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const raw = JSON.parse(await file.text());
+    places = {};
+    for (const [id, p] of Object.entries(raw.places || {})) {
+      places[id] = { name: p.name || id, x: p.x, y: p.y };
+    }
+    routes = (raw.routes || []).map((r) => ({ from: r.from, to: r.to, via: r.via || [] }));
+    save();
+    render();
+    say(`loaded ${Object.keys(places).length} places from ${file.name}`);
+  } catch (err) {
+    say(`could not read that file: ${err.message}`);
+  }
+});
+
+// --- view ------------------------------------------------------------------
+
+function fit() {
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  let w = vw, h = w * aspect;
+  if (h > vh) { h = vh; w = h / aspect; }
+  baseW = w; baseH = h;
+  stage.style.width = `${w}px`;
+  stage.style.height = `${h}px`;
+  view = { s: 1, tx: (vw - w) / 2, ty: (vh - h) / 2 };
+  applyView();
+  render();
+}
+
+function applyView() {
+  stage.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.s})`;
+}
+
+function clampPan() {
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  const w = baseW * view.s, h = baseH * view.s;
+  view.tx = w <= vw ? (vw - w) / 2 : Math.min(0, Math.max(vw - w, view.tx));
+  view.ty = h <= vh ? (vh - h) / 2 : Math.min(0, Math.max(vh - h, view.ty));
+}
+
+viewport.addEventListener('wheel', (e) => {
+  if (stage.hidden) return;
+  e.preventDefault();
+  const r = viewport.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const ns = Math.min(24, Math.max(1, view.s * Math.exp(-e.deltaY * 0.0015)));
+  view.tx = mx - (mx - view.tx) * (ns / view.s);
+  view.ty = my - (my - view.ty) * (ns / view.s);
+  view.s = ns;
+  clampPan(); applyView(); render();
+}, { passive: false });
+
+// Space or middle-button drag pans; a plain click drops a place.
+let panning = null;
+viewport.addEventListener('pointerdown', (e) => {
+  if (stage.hidden) return;
+  if (e.button === 1 || e.shiftKey === false && e.button === 0 && e.altKey) {
+    panning = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty };
+    viewport.classList.add('panning');
+    viewport.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+});
+viewport.addEventListener('pointermove', (e) => {
+  if (!panning) return;
+  view.tx = panning.tx + (e.clientX - panning.x);
+  view.ty = panning.ty + (e.clientY - panning.y);
+  clampPan(); applyView();
+});
+viewport.addEventListener('pointerup', () => { panning = null; viewport.classList.remove('panning'); });
+addEventListener('resize', () => { if (!stage.hidden) fit(); });
+
+// --- clicking --------------------------------------------------------------
+
+function normFromEvent(e) {
+  const r = stage.getBoundingClientRect();
+  return {
+    x: +(((e.clientX - r.left) / r.width)).toFixed(4),
+    y: +(((e.clientY - r.top) / r.height)).toFixed(4),
+  };
+}
+
+stage.addEventListener('click', (e) => {
+  if (e.target.classList.contains('place-dot')) return;
+  const p = normFromEvent(e);
+  if (mode === 'place') addPlace(p);
+  else addRoutePoint(p);
+});
+
+function addPlace({ x, y }) {
+  const name = ($('new-name').value || '').trim();
+  const base = name ? slug(name) : 'place';
+  let id = base, n = 2;
+  while (places[id]) id = `${base}-${n++}`;
+  places[id] = { name: name || id, x, y };
+  undoStack.push(() => { delete places[id]; });
+  $('new-name').value = '';
+  $('new-name').focus();
+  save(); render();
+  say(`added ${id} at (${x}, ${y})`);
+}
+
+function addRoutePoint(p) {
+  if (!routeDraft) { say('click a place first to start a route'); return; }
+  routeDraft.via.push([p.x, p.y]);
+  render();
+  say(`route ${routeDraft.from} → ? · ${routeDraft.via.length} bend(s) · click a place to finish`);
+}
+
+function onPlaceClick(id, e) {
+  e.stopPropagation();
+  if (mode !== 'route') return;
+  if (!routeDraft) {
+    routeDraft = { from: id, via: [] };
+    say(`route from ${id} · click to add bends, then click the destination`);
+  } else if (routeDraft.from === id) {
+    routeDraft = null;
+    say('route cancelled');
+  } else {
+    const route = { from: routeDraft.from, to: id, via: routeDraft.via };
+    routes.push(route);
+    undoStack.push(() => { routes.splice(routes.indexOf(route), 1); });
+    routeDraft = null;
+    say(`route ${route.from} → ${route.to} with ${route.via.length} bend(s)`);
+    save();
+  }
+  render();
+}
+
+// Drag an existing place to correct it.
+function onPlaceDown(id, e) {
+  if (mode !== 'place') return;
+  e.stopPropagation();
+  const before = { ...places[id] };
+  const move = (ev) => {
+    const p = normFromEvent(ev);
+    places[id].x = p.x; places[id].y = p.y;
+    render();
+  };
+  const up = () => {
+    removeEventListener('pointermove', move);
+    removeEventListener('pointerup', up);
+    undoStack.push(() => { places[id] = before; });
+    save();
+    say(`moved ${id} to (${places[id].x}, ${places[id].y})`);
+  };
+  addEventListener('pointermove', move);
+  addEventListener('pointerup', up);
+}
+
+// --- render ----------------------------------------------------------------
+
+const svg = (tag, attrs) => {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+};
+const sx = (x) => x * SVG_W;
+const sy = (y) => y * SVG_W * aspect;
+
+function render() {
+  const u = SVG_W / (baseW * view.s || 1);      // svg units per screen pixel
+
+  routesG.replaceChildren();
+  for (const r of routes) {
+    const a = places[r.from], z = places[r.to];
+    if (!a || !z) continue;
+    const pts = [a, ...r.via.map(([x, y]) => ({ x, y })), z];
+    routesG.append(svg('polyline', {
+      points: pts.map((p) => `${sx(p.x)},${sy(p.y)}`).join(' '),
+      fill: 'none', stroke: '#5b8fb9', 'stroke-width': 2 * u,
+      'stroke-dasharray': `${6 * u} ${5 * u}`, 'stroke-linejoin': 'round',
+    }));
+  }
+  if (routeDraft) {
+    const a = places[routeDraft.from];
+    const pts = [a, ...routeDraft.via.map(([x, y]) => ({ x, y }))];
+    if (pts.length > 1) {
+      routesG.append(svg('polyline', {
+        points: pts.map((p) => `${sx(p.x)},${sy(p.y)}`).join(' '),
+        fill: 'none', stroke: '#d4a24c', 'stroke-width': 2 * u,
+      }));
+    }
+  }
+
+  placesG.replaceChildren();
+  for (const [id, p] of Object.entries(places)) {
+    const g = svg('g', {});
+    const dot = svg('circle', {
+      cx: sx(p.x), cy: sy(p.y), r: 5 * u,
+      fill: routeDraft?.from === id ? '#d4a24c' : '#e6e3dd',
+      stroke: '#14161a', 'stroke-width': 1.5 * u, class: 'place-dot',
+    });
+    dot.addEventListener('click', (e) => onPlaceClick(id, e));
+    dot.addEventListener('pointerdown', (e) => onPlaceDown(id, e));
+    const label = svg('text', {
+      x: sx(p.x) + 9 * u, y: sy(p.y) + 4 * u,
+      'font-size': 12 * u, fill: '#e6e3dd', 'paint-order': 'stroke',
+      stroke: '#14161a', 'stroke-width': 3 * u, 'stroke-linejoin': 'round',
+    });
+    label.textContent = p.name;
+    g.append(dot, label);
+    placesG.append(g);
+  }
+
+  $('out').value = JSON.stringify({ places, routes: routes.map(compactRoute) }, null, 2)
+    .replace(/\[\n\s+(-?[\d.]+),\n\s+(-?[\d.]+)\n\s+\]/g, '[$1, $2]');
+  $('counts').textContent = `${Object.keys(places).length} places · ${routes.length} routes`;
+}
+
+const compactRoute = (r) => ({ from: r.from, to: r.to, via: r.via });
+
+// --- chrome ----------------------------------------------------------------
+
+function setMode(m) {
+  mode = m;
+  routeDraft = null;
+  $('mode-place').classList.toggle('on', m === 'place');
+  $('mode-route').classList.toggle('on', m === 'route');
+  say(m === 'place' ? 'click the map to drop a place · drag a place to move it'
+                    : 'click a place, then bends, then the destination');
+  render();
+}
+$('mode-place').addEventListener('click', () => setMode('place'));
+$('mode-route').addEventListener('click', () => setMode('route'));
+$('fit').addEventListener('click', fit);
+$('undo').addEventListener('click', () => {
+  const fn = undoStack.pop();
+  if (!fn) return say('nothing to undo');
+  fn(); save(); render(); say('undone');
+});
+$('copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('out').value); say('copied'); }
+  catch { $('out').removeAttribute('readonly'); $('out').select(); say('press ⌘C'); }
+});
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'p') setMode('place');
+  if (e.key === 'r') setMode('route');
+  if (e.key === 'f') fit();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); $('undo').click(); }
+  if (e.key === 'Escape' && routeDraft) { routeDraft = null; render(); say('route cancelled'); }
+});
+
+function say(msg) { $('status').textContent = msg; }
+function save() { setPref('coords.places', places); setPref('coords.routes', routes); }
+function slug(s) {
+  return s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '')
+    .trim().replace(/[\s_]+/g, '-').replace(/^-|-$/g, '') || 'place';
+}
+
+// --- boot ------------------------------------------------------------------
+const stored = await getImage(KEY);
+if (stored) await useBlob(stored);
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Story Map</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='5' fill='%235B9DFF'/></svg>">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div id="viewport">
+  <svg id="world-svg" aria-label="Story map"></svg>
+  <div id="chips"></div>
+
+  <div id="readout">
+    <div class="head">
+      <span id="page-label">p. —</span>
+      <span class="ch" id="chapter-label"></span>
+    </div>
+    <div id="roster"></div>
+    <details id="problems" hidden>
+      <summary><span id="problem-count"></span></summary>
+      <ul id="problem-list"></ul>
+    </details>
+  </div>
+
+  <div id="drop-hint"></div>
+
+  <div id="card" hidden>
+    <h1>Story Map</h1>
+    <p>Load a map image from your disk, and a <code>book.json</code> that says
+       who was where. The map never leaves your machine.</p>
+    <div class="row">
+      <label class="file">Choose map image…<input type="file" id="pick-image" accept="image/*"></label>
+      <label class="file">Choose book.json…<input type="file" id="pick-book" accept=".json,application/json"></label>
+    </div>
+    <div class="or">or drop either one anywhere</div>
+    <button class="dismiss" id="dismiss-card">Keep exploring the demo</button>
+  </div>
+
+  <div id="pop" hidden></div>
+</div>
+
+<footer id="bar">
+  <div id="chapters"></div>
+  <svg id="lanes" aria-hidden="true"></svg>
+
+  <div id="rail" role="slider" tabindex="0" aria-valuemin="1" aria-valuemax="2" aria-valuenow="1">
+    <div class="fill"></div>
+    <svg class="ticks" aria-hidden="true"></svg>
+    <div class="thumb"></div>
+  </div>
+  <svg id="gutter" aria-hidden="true"></svg>
+
+  <div id="transport">
+    <button class="btn" id="play" title="Space">▶︎ Play</button>
+    <button class="btn" id="speed" title="&lt; and &gt;">1×</button>
+    <span class="page"><span id="page-now">—</span> <span id="page-of"></span></span>
+    <span class="spacer"></span>
+    <select class="btn" id="book-pick" title="Which book"></select>
+    <button class="btn" id="scrim-btn" title="M — darken the map">Scrim</button>
+    <button class="btn" id="fit-btn" title="R — fit the map">Fit</button>
+    <button class="btn" id="help-btn" title="?">?</button>
+  </div>
+</footer>
+
+<div id="help" hidden>
+  <dl>
+    <h2>Time</h2>
+    <dt>Space</dt><dd>play / pause</dd>
+    <dt>← →</dt><dd>one page</dd>
+    <dt>⇧ ← →</dt><dd>ten pages</dd>
+    <dt>⌥ ← →</dt><dd>previous / next waypoint of the focused character</dd>
+    <dt>[ ]</dt><dd>previous / next chapter</dd>
+    <dt>⇧ [ ]</dt><dd>previous / next event</dd>
+    <dt>Home End</dt><dd>first / last page</dd>
+    <dt>&lt; &gt;</dt><dd>slower / faster</dd>
+    <h2>People</h2>
+    <dt>1 … 8</dt><dd>focus a character</dd>
+    <dt>0</dt><dd>clear focus</dd>
+    <dt>F</dt><dd>follow the focused character</dd>
+    <h2>Map</h2>
+    <dt>+ −</dt><dd>zoom</dd>
+    <dt>R</dt><dd>fit the map</dd>
+    <dt>M</dt><dd>darken the map behind the pins</dd>
+    <dt>L</dt><dd>show / hide the lane strip</dd>
+    <dt>Esc</dt><dd>leave follow, then clear focus</dd>
+  </dl>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

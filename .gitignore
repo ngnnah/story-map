@@ -1,0 +1,16 @@
+# Map scans stay out of the repo by default — the app reads them from your
+# disk at runtime. A book that ships its own map puts it in data/maps/, which
+# is excepted below.
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.tif
+*.tiff
+
+!data/maps/
+!data/maps/**
+
+.DS_Store
+node_modules/
