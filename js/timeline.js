@@ -22,10 +22,15 @@ export const legEase = (t) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(Math.max(t
  * a null place (they left the map). After their last waypoint they hold
  * position — the book ended, they did not.
  *
- * Co-located pins come back with a unit-circle `off` and a `crowd` count; the
+ * Crowded pins come back with a unit-circle `off` and a `crowd` count; the
  * renderer decides how far apart to draw them in pixels.
+ *
+ * `dodgeR` is how close two pins must be, in square map space, before they are
+ * treated as crowding each other. It belongs to the caller because "too close
+ * to read" is a number of pixels, and only the renderer knows what a pixel is
+ * worth at the current zoom. Omitted, only pins on the same spot fan out.
  */
-export function positionsAt(book, page) {
+export function positionsAt(book, page, dodgeR) {
   const pins = [];
 
   for (const ch of book.characters) {
@@ -37,7 +42,10 @@ export function positionsAt(book, page) {
     if (page >= last.page) {
       if (!last.place) continue;                            // left the map for good
       const p = book.places[last.place];
-      pins.push(rest(ch, p, last, page >= last.page));
+      // `done` fades the pin, because holding someone in place is the app's
+      // rule rather than something the book said. On the last waypoint's own
+      // page the book *does* say it, so that page is not faded.
+      pins.push(rest(ch, p, last, page > last.page));
       continue;
     }
 
@@ -47,6 +55,12 @@ export function positionsAt(book, page) {
     const b = wps[i + 1];
 
     if (!a.place) continue;                                 // off the map for this stretch
+
+    // The page a waypoint names is a fact about where they are, so it reads as
+    // 'at' even when the next waypoint moves them on. Without this an
+    // unbracketed arrival spends its own page in state 'moving' with a null
+    // place, and the renderer never marks the town as occupied.
+    if (page === a.page) { pins.push(rest(ch, book.places[a.place], a, false)); continue; }
 
     // Sitting still: either bracketed by two waypoints at the same place, or
     // waiting at `a` until the page they vanish.
@@ -82,7 +96,7 @@ export function positionsAt(book, page) {
     });
   }
 
-  return dodge(pins);
+  return dodge(pins, dodgeR);
 }
 
 function rest(ch, p, wp, done) {
@@ -111,23 +125,37 @@ function rest(ch, p, wp, done) {
  */
 export function trailUpTo(book, who, page) {
   const wps = book.byCharacter[who];
-  if (!wps || !wps.length || page < wps[0].page || !wps[0].place) return [];
+  if (!wps || !wps.length || page < wps[0].page) return [];
 
   const out = [];
+  // A character who drops out of the narration and comes back has walked no
+  // line between the two. The next point is flagged so the renderer lifts the
+  // pen there instead of drawing a journey the book never described.
+  let gapPending = false;
   const push = (p, pg, inferred = false) => {
     const prev = out[out.length - 1];
-    if (!prev || Math.abs(prev.x - p.x) > 1e-9 || Math.abs(prev.y - p.y) > 1e-9) {
-      out.push({ x: p.x, y: p.y, page: pg, inferred });
+    if (prev && Math.abs(prev.x - p.x) <= 1e-9 && Math.abs(prev.y - p.y) <= 1e-9) {
+      gapPending = false;              // came back to where they left: nothing to break
+      return;
     }
+    const pt = { x: p.x, y: p.y, page: pg, inferred };
+    if (gapPending) pt.gap = true;
+    out.push(pt);
+    gapPending = false;
   };
 
-  push(book.places[wps[0].place], wps[0].page);
-
-  for (let i = 0; i < wps.length - 1; i++) {
+  for (let i = 0; i < wps.length; i++) {
     const a = wps[i];
+    if (page < a.page) break;
+    if (!a.place) { if (out.length) gapPending = true; continue; }
+
+    // Anchor every leg at its own start. Relying on the previous leg to have
+    // ended here is what lost the re-entry vertex across a gap.
+    push(book.places[a.place], a.page);
+
     const b = wps[i + 1];
-    if (page <= a.page) break;
-    if (!a.place || !b.place || a.place === b.place) continue;
+    if (!b || page <= a.page) break;
+    if (!b.place || a.place === b.place) continue;
 
     const line = polylineFor(book, a.place, b.place, who);
     const span = b.page - a.page;
@@ -136,15 +164,13 @@ export function trailUpTo(book, who, page) {
     // Stamp each point with the page it was reached, so the renderer can fade
     // the trail by age. Arc fraction maps back to a page through the inverse
     // of legEase, which is what put the point there in the first place.
-    const total = arcLength(part);
+    const whole = arcLength(line);
     let acc = 0;
     for (let k = 1; k < part.length; k++) {
       acc += Math.hypot(part[k].x - part[k - 1].x, part[k].y - part[k - 1].y);
-      const whole = arcLength(line);
       const f = whole > 0 ? acc / whole : 1;
       push(part[k], a.page + span * unease(f), line.inferred);
     }
-    if (total === 0) push(part.at(-1), a.page, line.inferred);
     if (page < b.page) break;
   }
   return out;
@@ -245,8 +271,13 @@ export function storyEvents(book) {
         place: s.place,
       });
     });
+    let onStage = false;
     for (const w of book.byCharacter[ch.id] || []) {
-      if (!w.place) events.push({ kind: 'exit', page: w.page, who: [ch.id], place: null, note: w.note });
+      if (w.place) { onStage = true; continue; }
+      // A null before their first place is padding in the data, not an exit —
+      // you cannot leave a map you were never on.
+      if (onStage) events.push({ kind: 'exit', page: w.page, who: [ch.id], place: null, note: w.note });
+      onStage = false;
     }
   }
 

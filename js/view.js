@@ -6,6 +6,7 @@
 // free, and there is no second coordinate system to keep in sync.
 
 import { positionsAt, bandTrails } from './timeline.js';
+import { ICON_BOX, ICON_FILL, iconPath } from './icons.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const MAP_W = 1000;
@@ -16,7 +17,12 @@ const el = (tag, attrs = {}) => {
   return n;
 };
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
-const pathOf = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(3)} ${p.y.toFixed(3)}`).join(' ');
+// `gap` marks a point the character reached without walking there — they were
+// off the map in between. Emitting M rather than L lifts the pen, so the
+// trail shows two journeys instead of inventing a road between them.
+const pathOf = (pts) => pts
+  .map((p, i) => `${i && !p.gap ? 'L' : 'M'}${p.x.toFixed(3)} ${p.y.toFixed(3)}`)
+  .join(' ');
 
 export class View {
   constructor(svg, chipLayer) {
@@ -178,14 +184,20 @@ export class View {
     const HOT = 0.04 * span;
     const WARM = 0.20 * span;
 
-    const pins = positionsAt(book, page);
+    // What counts as crowded is a number of pixels, and positionsAt works in map
+    // units, so the radius is computed here. Two pins overlap when their centres
+    // are closer than one diameter — that is the honest threshold, and the
+    // narrowest one, which matters because clustering is single-linkage and a
+    // generous radius chains pins that do not actually collide.
+    const pinRForDodge = k < 1.3 ? 9 : k < 2.2 ? 11 : 14;
+    const pins = positionsAt(book, page, (2 * pinRForDodge) * u / MAP_W);
     const byWho = new Map(pins.map((p) => [p.who, p]));
     const raised = this.focus || this.hover;
 
     if (this.following) this.followStep(byWho.get(this.following));
 
     // --- zoom bands: what is worth drawing at this scale
-    const pinR = k < 1.3 ? 5 : k < 2.2 ? 6 : 7;
+    const pinR = pinRForDodge;
     const showAllPlaceLabels = k >= 2.2;
     const showMonograms = k >= 2.2;
     const clusterAt = k < 1.3 ? 4 : k < 2.2 ? 5 : 6;
@@ -302,15 +314,22 @@ export class View {
       const wake = [el('circle', { class: 'wake' }), el('circle', { class: 'wake' }), el('circle', { class: 'wake' })];
       const pulse = el('circle', { class: 'pulse' });
       const body = el('circle', { class: 'body' });
+      // The silhouette sits in its own <g>: the group carries the placement
+      // transform while the path inside it is free to take a CSS transform
+      // (debut, nudge). A CSS transform on the path would replace the
+      // placement outright and fling the figure to the corner of the map.
+      const iconWrap = el('g', { class: 'icon-wrap' });
+      const icon = el('path', { class: 'icon' });
+      iconWrap.append(icon);
       const mono = el('text', { class: 'mono' });
       const label = el('text', { class: 'label' });
       const spoke = el('line', { class: 'spoke' });
-      g.append(spoke, ...wake, pulse, body, mono, label);
+      g.append(spoke, ...wake, pulse, body, iconWrap, mono, label);
       g.addEventListener('pointerenter', () => { this.hover = p.who; });
       g.addEventListener('pointerleave', () => { if (this.hover === p.who) this.hover = null; });
       g.addEventListener('click', (e) => { e.stopPropagation(); this.onPickCharacter(p.who); });
       this.gPins.append(g);
-      n = { g, wake, pulse, body, mono, label, spoke };
+      n = { g, wake, pulse, body, iconWrap, icon, mono, label, spoke };
       this.pinNodes.set(p.who, n);
       const i = this.book.charIndex[p.who] ?? 0;
       g.style.setProperty('--phase', `${i * -370}ms`);
@@ -362,19 +381,50 @@ export class View {
       w.setAttribute('opacity', [0.30, 0.18, 0.10][i]);
     });
 
-    const showMono = showMonograms || raised === p.who;
+    // A role silhouette in place of the disc, gated on how big this pin
+    // actually comes out in CSS pixels. `pinR` already *is* screen pixels —
+    // the body is drawn at `pinR * u` world units — so the gate needs no
+    // camera maths. It is deliberately not the zoom band `k`: the bands
+    // answer a different question (what is worth drawing at all), and a
+    // silhouette below about 15px goes to mud whatever the zoom says.
+    const ICON_MIN_PX = 15;   // under this a figure goes to mud; a disc still reads
+    const ch = this.book.characters[this.book.charIndex[p.who] ?? -1];
+    // The silhouette takes over the disc's whole footprint, so swapping one in
+    // never makes a character's mark smaller. `ICON_FILL` is how much of that
+    // box the shortest figure actually covers — gate on the ink, not the box.
+    const iconBoxPx = 2 * pinR;
+    const useIcon = !!ch?.icon && iconBoxPx * ICON_FILL >= ICON_MIN_PX;
+    n.body.style.display = useIcon ? 'none' : '';
+    n.iconWrap.style.display = useIcon ? '' : 'none';
+    if (useIcon) {
+      // world units per icon-box unit: the box is iconBoxPx CSS px across.
+      const scale = (iconBoxPx * u) / ICON_BOX;
+      n.icon.setAttribute('d', iconPath(ch.icon));
+      n.icon.setAttribute('fill', p.color);
+      n.iconWrap.setAttribute(
+        'transform',
+        `translate(${cx} ${cy}) scale(${scale}) translate(${-ICON_BOX / 2} ${-ICON_BOX / 2})`,
+      );
+    }
+
+    // The silhouette has already said who this is at a glance; an initial
+    // stamped over it just fights the shape.
+    const showMono = (showMonograms || raised === p.who) && !useIcon;
     n.mono.textContent = showMono ? (p.short ?? p.name).slice(0, 1) : '';
     n.mono.setAttribute('x', cx);
     n.mono.setAttribute('y', cy);
     n.mono.style.fontSize = `${9 * u}px`;
 
-    n.label.textContent = p.short ?? p.name;
+    // Hovering is the one moment you have asked about this pin in
+    // particular, so it is the one moment the full name is worth the width.
+    const hovered = this.hover === p.who;
+    n.label.textContent = hovered ? p.name : (p.short ?? p.name);
     n.label.setAttribute('x', cx);
     n.label.setAttribute('y', cy - (pinR + 7) * u);
     n.label.style.fontSize = `${11 * u}px`;
     n.label.style.strokeWidth = `${3 * u}px`;
     n.label.setAttribute('text-anchor', 'middle');
-    n.label.classList.toggle('hidden', !(raised === p.who || crowd === 1 || p.state === 'moving'));
+    n.label.classList.toggle('hidden', !(hovered || raised === p.who || crowd === 1 || p.state === 'moving'));
 
     const spoked = Math.hypot(cur.x, cur.y) > 1;
     n.spoke.setAttribute('x1', p.x * MAP_W);
@@ -388,8 +438,9 @@ export class View {
   drawPuck(group, { u }, live) {
     this.puckNodes ??= new Map();
     const key = group.map((p) => p.who).sort().join('|');
+    // The pruner below looks this set up by group key, not by character id.
+    live.add(key);
     for (const p of group) {
-      live.add(p.who);
       const n = this.pinNodes.get(p.who);
       if (n) { n.g.remove(); this.pinNodes.delete(p.who); }
     }

@@ -62,14 +62,14 @@
   ],
 
   "characters": [
-    { "id": "shea",    "name": "Shea Ohmsford",  "role": "half-elf, heir of Jerle Shannara" },
-    { "id": "flick",   "name": "Flick Ohmsford", "role": "his brother" },
-    { "id": "allanon", "name": "Allanon",        "role": "the last Druid" },
-    { "id": "menion",  "name": "Menion Leah",    "role": "Prince of Leah" },
-    { "id": "balinor", "name": "Balinor Buckhannah", "role": "heir of Tyrsis" },
-    { "id": "hendel",  "name": "Hendel",         "role": "Dwarf of Culhaven" },
-    { "id": "durin",   "name": "Durin Elessedil", "role": "Elf of Arborlon" },
-    { "id": "dayel",   "name": "Dayel Elessedil", "role": "his brother" }
+    { "id": "shea",    "name": "Shea Ohmsford",  "role": "half-elf, heir of Jerle Shannara", "icon": "elf" },
+    { "id": "flick",   "name": "Flick Ohmsford", "role": "his brother", "icon": "man" },
+    { "id": "allanon", "name": "Allanon",        "role": "the last Druid", "icon": "druid" },
+    { "id": "menion",  "name": "Menion Leah",    "role": "Prince of Leah", "icon": "man" },
+    { "id": "balinor", "name": "Balinor Buckhannah", "role": "heir of Tyrsis", "icon": "man" },
+    { "id": "hendel",  "name": "Hendel",         "role": "Dwarf of Culhaven", "icon": "dwarf" },
+    { "id": "durin",   "name": "Durin Elessedil", "role": "Elf of Arborlon", "icon": "elf" },
+    { "id": "dayel",   "name": "Dayel Elessedil", "role": "his brother", "icon": "elf" }
   ],
 
   "chapters": [

@@ -106,6 +106,9 @@ export function parseBook(raw) {
       short: typeof c.short === 'string' && c.short ? c.short : name.split(/\s+/)[0],
       color: typeof c.color === 'string' && c.color ? c.color : DEFAULT_COLORS[i % DEFAULT_COLORS.length],
       role: typeof c.role === 'string' ? c.role : '',
+      // A named silhouette from js/icons.js. Absent, the pin stays a disc, so
+      // a book that names nothing still renders.
+      icon: typeof c.icon === 'string' ? c.icon : '',
     });
   }
   if (!characters.length) fail('"characters" is empty — nobody to follow');

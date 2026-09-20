@@ -123,3 +123,111 @@ test('headingAt points along the current segment', () => {
   assert.equal(headingAt([{ x: 0, y: 0 }], 0.5), null);
   assert.equal(headingAt([{ x: 0.2, y: 0.2 }, { x: 0.2, y: 0.2 }], 0.5), null);
 });
+
+// --- dodge: clustering by screen-space proximity ---------------------------
+//
+// The renderer works in pixels, dodge works in square map space, so the tests
+// speak both: PX is one screen pixel expressed in map units at fit zoom on a
+// 1440px-wide window (the map is one unit wide, letterboxed to the viewport).
+// CLUSTER_R is the radius view.js would pass — about two pin diameters.
+const PX = 1 / 1440;
+const CLUSTER_R = 16 * PX;
+
+const permutations = (arr) => {
+  if (arr.length <= 1) return [arr];
+  const out = [];
+  for (let i = 0; i < arr.length; i++) {
+    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+    for (const p of permutations(rest)) out.push([arr[i], ...p]);
+  }
+  return out;
+};
+const crowdsById = (pins, r) =>
+  Object.fromEntries(dodge(pins, r).map((p) => [p.id, p.crowd]));
+
+test('dodge fans out pins a few pixels apart, which exact-equality never did', () => {
+  // The Elfstones case: two places three screen pixels apart. Keyed on
+  // coordinate equality these overlap and one pin is invisible.
+  const pins = [
+    { id: 'a', x: 0.20, y: 0.30 },
+    { id: 'b', x: 0.20 + 3 * PX, y: 0.30 + 1 * PX },
+  ];
+  const out = dodge(pins, CLUSTER_R);
+  assert.deepEqual(out.map((p) => p.crowd), [2, 2]);
+  assert.notDeepEqual(out[0].off, out[1].off);
+  for (const p of out) near(Math.hypot(p.off.dx, p.off.dy), 1);
+  // and the offsets stay offsets: the position itself is untouched
+  assert.deepEqual([out[0].x, out[0].y], [0.20, 0.30]);
+});
+
+test('dodge leaves pins outside the radius alone', () => {
+  const out = dodge([
+    { id: 'a', x: 0.20, y: 0.30 },
+    { id: 'b', x: 0.20 + 40 * PX, y: 0.30 },
+  ], CLUSTER_R);
+  assert.deepEqual(out.map((p) => p.crowd), [1, 1]);
+  assert.deepEqual(out.map((p) => p.off), [null, null]);
+});
+
+test('dodge with a radius still leaves a lone pin, and an empty list, alone', () => {
+  const out = dodge([{ id: 'a', x: 0.2, y: 0.3 }], CLUSTER_R);
+  assert.equal(out[0].off, null);
+  assert.equal(out[0].crowd, 1);
+  assert.deepEqual(dodge([], CLUSTER_R), []);
+  assert.deepEqual(dodge([]), []);
+});
+
+test('dodge groups the same set of pins the same way whatever order they arrive in', () => {
+  // A first-wins sweep would make c join a-or-b depending on who it met first.
+  const pins = [
+    { id: 'a', x: 0.20, y: 0.30 },
+    { id: 'b', x: 0.20 + 4 * PX, y: 0.30 },
+    { id: 'c', x: 0.20 + 2 * PX, y: 0.30 + 5 * PX },
+    { id: 'd', x: 0.50, y: 0.70 },
+  ];
+  const want = { a: 3, b: 3, c: 3, d: 1 };
+  for (const perm of permutations(pins)) {
+    assert.deepEqual(crowdsById(perm, CLUSTER_R), want, `order ${perm.map((p) => p.id)}`);
+  }
+});
+
+test('dodge chains: A-B and B-C close, A-C not, is one group of three', () => {
+  // DECIDED: single-linkage. A pin overlapping its neighbour is a drawing
+  // problem whether or not the far end of the chain overlaps it, and the
+  // alternative (a partition that depends on which pair you cut) is not
+  // order-independent. The cost is over-spreading, never a lost pin.
+  const chain = [
+    { id: 'a', x: 0.20, y: 0.30 },
+    { id: 'b', x: 0.20 + 12 * PX, y: 0.30 },
+    { id: 'c', x: 0.20 + 24 * PX, y: 0.30 },
+  ];
+  assert.deepEqual(dodge(chain, CLUSTER_R).map((p) => p.crowd), [3, 3, 3]);
+  for (const perm of permutations(chain)) {
+    assert.deepEqual(crowdsById(perm, CLUSTER_R), { a: 3, b: 3, c: 3 });
+  }
+  // One more link out and the far pin is its own group again.
+  const broken = [...chain, { id: 'd', x: 0.20 + 60 * PX, y: 0.30 }];
+  assert.deepEqual(crowdsById(broken, CLUSTER_R), { a: 3, b: 3, c: 3, d: 1 });
+});
+
+test('dodge is deterministic with a radius: same input, identical output', () => {
+  const pins = [
+    { id: 'a', x: 0.20, y: 0.30 },
+    { id: 'b', x: 0.20 + 3 * PX, y: 0.30 },
+    { id: 'c', x: 0.20 + 6 * PX, y: 0.30 },
+  ];
+  assert.deepEqual(dodge(pins, CLUSTER_R), dodge(pins, CLUSTER_R));
+  assert.deepEqual(dodge(pins, CLUSTER_R), dodge(pins.map((p) => ({ ...p })), CLUSTER_R));
+});
+
+test('dodge without a radius still means coincidence, as it always has', () => {
+  const pins = [
+    { id: 'a', x: 0.5, y: 0.5 },
+    { id: 'b', x: 0.5, y: 0.5 },
+    { id: 'c', x: 0.5 + 3 * PX, y: 0.5 },
+  ];
+  const out = dodge(pins);
+  assert.deepEqual(out.map((p) => p.crowd), [2, 2, 1]);
+  assert.equal(out[2].off, null);
+  assert.deepEqual(out.map((p) => p.id), ['a', 'b', 'c']);
+});

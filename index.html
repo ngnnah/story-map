@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Story Map</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='5' fill='%235B9DFF'/></svg>">
 <link rel="stylesheet" href="css/app.css">
@@ -46,7 +46,8 @@
   <div id="chapters"></div>
   <svg id="lanes" aria-hidden="true"></svg>
 
-  <div id="rail" role="slider" tabindex="0" aria-valuemin="1" aria-valuemax="2" aria-valuenow="1">
+  <div id="rail" role="slider" tabindex="0" aria-label="Page"
+       aria-valuemin="1" aria-valuemax="2" aria-valuenow="1">
     <div class="fill"></div>
     <svg class="ticks" aria-hidden="true"></svg>
     <div class="thumb"></div>
@@ -65,28 +66,38 @@
   </div>
 </footer>
 
+<!-- Event announcements (meetings, arrivals, exits) are written here by
+     app.js so a screen reader hears what the chips over the map show. -->
+<div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
 <div id="help" hidden>
-  <dl>
+  <div class="keys">
     <h2>Time</h2>
-    <dt>Space</dt><dd>play / pause</dd>
-    <dt>← →</dt><dd>one page</dd>
-    <dt>⇧ ← →</dt><dd>ten pages</dd>
-    <dt>⌥ ← →</dt><dd>previous / next waypoint of the focused character</dd>
-    <dt>[ ]</dt><dd>previous / next chapter</dd>
-    <dt>⇧ [ ]</dt><dd>previous / next event</dd>
-    <dt>Home End</dt><dd>first / last page</dd>
-    <dt>&lt; &gt;</dt><dd>slower / faster</dd>
+    <dl>
+      <dt>Space</dt><dd>play / pause</dd>
+      <dt>← →</dt><dd>one page</dd>
+      <dt>⇧ ← →</dt><dd>ten pages</dd>
+      <dt>⌥ ← →</dt><dd>previous / next waypoint of the focused character</dd>
+      <dt>[ ]</dt><dd>previous / next chapter</dd>
+      <dt>⇧ [ ]</dt><dd>previous / next event</dd>
+      <dt>Home End</dt><dd>first / last page</dd>
+      <dt>&lt; &gt;</dt><dd>slower / faster</dd>
+    </dl>
     <h2>People</h2>
-    <dt>1 … 8</dt><dd>focus a character</dd>
-    <dt>0</dt><dd>clear focus</dd>
-    <dt>F</dt><dd>follow the focused character</dd>
+    <dl>
+      <dt>1 … 8</dt><dd>focus a character</dd>
+      <dt>0</dt><dd>clear focus</dd>
+      <dt>F</dt><dd>follow the focused character</dd>
+    </dl>
     <h2>Map</h2>
-    <dt>+ −</dt><dd>zoom</dd>
-    <dt>R</dt><dd>fit the map</dd>
-    <dt>M</dt><dd>darken the map behind the pins</dd>
-    <dt>L</dt><dd>show / hide the lane strip</dd>
-    <dt>Esc</dt><dd>leave follow, then clear focus</dd>
-  </dl>
+    <dl>
+      <dt>+ −</dt><dd>zoom</dd>
+      <dt>R</dt><dd>fit the map</dd>
+      <dt>M</dt><dd>darken the map behind the pins</dd>
+      <dt>L</dt><dd>show / hide the lane strip</dd>
+      <dt>Esc</dt><dd>leave follow, then clear focus</dd>
+    </dl>
+  </div>
 </div>
 
 <script type="module" src="js/app.js"></script>

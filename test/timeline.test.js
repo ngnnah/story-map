@@ -412,3 +412,149 @@ test('bands degrade gracefully for a short or empty trail', () => {
   assert.deepEqual(bands.warm, []);
   assert.deepEqual(bandTrails(b2, 'a', 5, 5, 15).hot, []);
 });
+
+// --- leaving the map and coming back ---------------------------------------
+//
+// The demo fixture has no null gap and no unbracketed stop, which is why the
+// sweep above went green over two real bugs. These fixtures cover the shapes a
+// real dataset hits constantly: a character drops out of the narration, then
+// reappears somewhere else.
+
+const GAPPY = [
+  ['A leaves and comes back', [
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'a', page: 20, place: null },
+    { who: 'a', page: 30, place: 'south' },
+    { who: 'a', page: 40, place: 'north' },
+  ]],
+  ['A is off the map before ever appearing', [
+    { who: 'a', page: 10, place: null },
+    { who: 'a', page: 20, place: 'north' },
+    { who: 'a', page: 40, place: 'south' },
+  ]],
+  ['A vanishes mid-journey and returns to the same place', [
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'a', page: 20, place: null },
+    { who: 'a', page: 30, place: 'north' },
+    { who: 'a', page: 50, place: 'east' },
+  ]],
+  ['two gaps in a row', [
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'a', page: 15, place: null },
+    { who: 'a', page: 25, place: 'east' },
+    { who: 'a', page: 30, place: null },
+    { who: 'a', page: 45, place: 'south' },
+  ]],
+];
+
+for (const [name, wps] of GAPPY) {
+  test(`trail ends where the pin is, every page: ${name}`, () => {
+    const b = makeBook(wps);
+    for (let page = 1; page <= 100; page += 1) {
+      const pin = find(positionsAt(b, page), 'a');
+      if (!pin) continue;
+      const trail = trailUpTo(b, 'a', page);
+      assert.ok(trail.length, `p.${page}: pin but no trail`);
+      near(trail.at(-1).x, pin.x, 1e-9);
+      near(trail.at(-1).y, pin.y, 1e-9);
+    }
+  });
+
+  test(`trail never shrinks: ${name}`, () => {
+    const b = makeBook(wps);
+    let prev = -1;
+    for (let page = 1; page <= 100; page += 1) {
+      const len = length(trailUpTo(b, 'a', page));
+      assert.ok(len >= prev - 1e-9, `trail shrank at p.${page}: ${len} < ${prev}`);
+      prev = len;
+    }
+  });
+
+  test(`bands cover the trail exactly, every page: ${name}`, () => {
+    const b = makeBook(wps);
+    for (let page = 1; page <= 100; page += 1) {
+      const full = length(trailUpTo(b, 'a', page));
+      const bands = bandTrails(b, 'a', page, 4, 20);
+      const sum = length(bands.cold) + length(bands.warm) + length(bands.hot);
+      near(sum, full, 1e-9);
+    }
+  });
+}
+
+test('a trail keeps the excursion a character made before vanishing', () => {
+  const b = makeBook(GAPPY[0][1]);
+  // south is the far side of the map; they walked there between p.30 and p.40.
+  const trail = trailUpTo(b, 'a', 40);
+  assert.ok(trail.some((p) => Math.abs(p.y - 0.8) < 1e-9), 'the visit to south vanished');
+});
+
+test('the first point after a gap is marked, so the renderer can break the line', () => {
+  const b = makeBook(GAPPY[0][1]);
+  const trail = trailUpTo(b, 'a', 40);
+  const gaps = trail.filter((p) => p.gap);
+  assert.equal(gaps.length, 1, 'expected exactly one break');
+  near(gaps[0].y, 0.8, 1e-9);            // they reappeared at south
+  assert.ok(!trail[0].gap, 'the first point of a trail is not a break');
+});
+
+test('returning to the place you left draws no break', () => {
+  const b = makeBook(GAPPY[2][1]);       // north -> null -> north -> east
+  const trail = trailUpTo(b, 'a', 50);
+  assert.deepEqual(trail.filter((p) => p.gap), [], 'no discontinuity to draw');
+});
+
+test('a character who starts off the map still earns a trail once they appear', () => {
+  const b = makeBook(GAPPY[1][1]);
+  assert.ok(trailUpTo(b, 'a', 40).length >= 2, 'no trail after they appeared');
+});
+
+// --- the held-in-place rule ------------------------------------------------
+
+test('a pin is not stale on the page its last waypoint asserts', () => {
+  const b = makeBook([
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'a', page: 60, place: 'south' },
+  ]);
+  assert.equal(find(positionsAt(b, 59), 'a').done, false);
+  assert.equal(find(positionsAt(b, 60), 'a').done, false, 'p.60 is what the book says');
+  assert.equal(find(positionsAt(b, 61), 'a').done, true, 'p.61 is the app holding them');
+});
+
+test('an unbracketed arrival reads as being at the place, not mid-journey', () => {
+  const b = makeBook([
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'a', page: 30, place: 'south' },
+    { who: 'a', page: 50, place: 'east' },
+  ]);
+  const pin = find(positionsAt(b, 30), 'a');
+  assert.equal(pin.state, 'at');
+  assert.equal(pin.place, 'south');
+});
+
+test('a leading null waypoint is not announced as an exit', () => {
+  const b = makeBook(GAPPY[1][1]);
+  const exits = storyEvents(b).filter((e) => e.kind === 'exit');
+  assert.deepEqual(exits, [], 'they were never on the map to leave it');
+});
+
+test('positionsAt passes a crowding radius through to dodge', () => {
+  // Two places a hair apart: pins that would overlap on screen but are not on
+  // the same spot. Without a radius they must not fan; with one they must.
+  const b = parseBook({
+    title: 'near', map: { aspect: 1 }, pages: [1, 100], bow: 0,
+    places: {
+      here:  { name: 'Here',  x: 0.500, y: 0.500 },
+      there: { name: 'There', x: 0.502, y: 0.500 },
+    },
+    characters: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }],
+    chapters: [{ n: 1, startPage: 1 }],
+    waypoints: [
+      { who: 'a', page: 1, place: 'here' },  { who: 'a', page: 90, place: 'here' },
+      { who: 'b', page: 1, place: 'there' }, { who: 'b', page: 90, place: 'there' },
+    ],
+  }).book;
+
+  assert.deepEqual(positionsAt(b, 50).map((p) => p.crowd), [1, 1]);
+  assert.deepEqual(positionsAt(b, 50, 0.01).map((p) => p.crowd), [2, 2]);
+  assert.ok(positionsAt(b, 50, 0.01).every((p) => p.off), 'both should get an offset');
+});

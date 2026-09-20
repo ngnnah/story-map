@@ -55,6 +55,7 @@ async function loadBook(raw, { imageBlob } = {}) {
   clock.seek(pref(`page:${book.id}`, book.pages[0]));
 
   showProblems(problems);
+  buildRoster();
   buildChapters();
   buildLanes();
   buildGutter();
@@ -122,32 +123,23 @@ function frame(page, prev, dt) {
 
 // ------------------------------------------------------------- the readout
 
-function drawRoster(page, pins) {
-  const chapter = chapterAt(book, page);
-  $('page-label').textContent = `p. ${Math.round(page)} / ${book.pages[1]}`;
-  $('page-now').textContent = Math.round(page);
-  $('chapter-label').textContent = chapter
-    ? `Ch. ${chapter.n}${chapter.title ? ` · ${chapter.title}` : ''}` : '';
+// The roster is built once per book and mutated per frame. It used to be
+// rebuilt with replaceChildren() on every frame, which meant mousedown and
+// mouseup landed on different node instances and the browser never fired a
+// click at all — so neither picking a character nor alt-clicking to hide one
+// had ever worked. Rows also stay in declaration order: re-sorting by state on
+// every frame made the list reshuffle under the cursor while scrubbing.
+let rosterNodes = new Map();
 
-  const byWho = new Map(pins.map((p) => [p.who, p]));
-  const rows = [...book.characters].sort((a, b) => {
-    const rank = (c) => {
-      if (view.focus === c.id) return 0;
-      const p = byWho.get(c.id);
-      if (!p) return 4;
-      return p.state === 'moving' ? 1 : 2;
-    };
-    return rank(a) - rank(b) || a.name.localeCompare(b.name);
-  });
-
+function buildRoster() {
+  rosterNodes = new Map();
   const frag = document.createDocumentFragment();
-  for (const c of rows) {
-    const p = byWho.get(c.id);
+  for (const c of book.characters) {
     const row = document.createElement('div');
     row.className = 'who';
     row.style.color = c.color;
-    if (view.focus === c.id) row.classList.add('focused');
-    if (!p) row.classList.add('gone');
+    row.tabIndex = 0;
+    row.setAttribute('role', 'button');
 
     const sw = document.createElement('span');
     sw.className = 'swatch';
@@ -157,42 +149,67 @@ function drawRoster(page, pins) {
     name.className = 'name';
     name.style.color = 'var(--text)';
     name.textContent = c.name;
-    if (hidden.has(c.id)) name.style.opacity = 0.4;
 
     const where = document.createElement('span');
     where.className = 'where';
-    if (!p) {
-      where.textContent = pastTense(c.id, page);
-    } else if (p.state === 'moving') {
-      where.append(`→ ${book.places[p.to].name}`);
-      const bar = document.createElement('span');
-      bar.className = 'bar';
-      const i = document.createElement('i');
-      i.style.width = `${Math.round(p.progress * 100)}%`;
-      bar.append(i);
-      where.append(bar);
-    } else {
-      const stay = presence(book, c.id).find((s) => s.place === p.place && s.from <= page && page <= s.to);
-      where.textContent = `@ ${book.places[p.place].name}${stay ? `  p.${stay.from}–` : ''}`;
-    }
+    const whereText = document.createTextNode('');
+    const bar = document.createElement('span');
+    bar.className = 'bar';
+    const barFill = document.createElement('i');
+    bar.append(barFill);
+    where.append(whereText, bar);
 
-    row.append(sw, name, where);
-    if (p?.note) {
-      const note = document.createElement('span');
-      note.className = 'note';
-      note.textContent = p.note;
-      row.append(note);
-    }
+    const note = document.createElement('span');
+    note.className = 'note';
 
+    row.append(sw, name, where, note);
     row.addEventListener('pointerenter', () => { view.hover = c.id; });
     row.addEventListener('pointerleave', () => { if (view.hover === c.id) view.hover = null; });
-    row.addEventListener('click', (e) => {
-      if (e.altKey) toggleHidden(c.id);
-      else pickCharacter(c.id);
+    const pick = (e) => { if (e.altKey) toggleHidden(c.id); else pickCharacter(c.id); };
+    row.addEventListener('click', pick);
+    row.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      pick(e);
     });
     frag.append(row);
+    rosterNodes.set(c.id, { row, name, whereText, bar, barFill, note });
   }
   $('roster').replaceChildren(frag);
+}
+
+function drawRoster(page, pins) {
+  const chapter = chapterAt(book, page);
+  $('page-label').textContent = `p. ${Math.round(page)} / ${book.pages[1]}`;
+  $('page-now').textContent = Math.round(page);
+  $('chapter-label').textContent = chapter
+    ? `Ch. ${chapter.n}${chapter.title ? ` \u00b7 ${chapter.title}` : ''}` : '';
+
+  const byWho = new Map(pins.map((p) => [p.who, p]));
+  for (const c of book.characters) {
+    const n = rosterNodes.get(c.id);
+    if (!n) continue;
+    const p = byWho.get(c.id);
+    n.row.classList.toggle('focused', view.focus === c.id);
+    n.row.classList.toggle('gone', !p);
+    n.name.style.opacity = hidden.has(c.id) ? 0.4 : '';
+
+    if (!p) {
+      n.whereText.nodeValue = pastTense(c.id, page);
+      n.bar.style.display = 'none';
+    } else if (p.state === 'moving') {
+      n.whereText.nodeValue = `\u2192 ${book.places[p.to].name}`;
+      n.bar.style.display = '';
+      n.barFill.style.width = `${Math.round(p.progress * 100)}%`;
+    } else {
+      const stay = presence(book, c.id).find((s) => s.place === p.place && s.from <= page && page <= s.to);
+      n.whereText.nodeValue = `@ ${book.places[p.place].name}${stay ? `  p.${stay.from}\u2013` : ''}`;
+      n.bar.style.display = 'none';
+    }
+
+    n.note.textContent = p?.note || '';
+    n.note.style.display = p?.note ? '' : 'none';
+  }
 }
 
 function pastTense(who, page) {
@@ -497,22 +514,33 @@ const viewport = $('viewport');
 let pan = null;
 viewport.addEventListener('pointerdown', (e) => {
   if (e.target.closest('#readout, #card, #pop')) return;
-  pan = { x: e.clientX, y: e.clientY, moved: false };
+  // `onPin` is read from the pointerdown target. Once the pointer is captured
+  // the pointerup target is #viewport, so asking there always said "empty map"
+  // and every click on a pin cleared the focus instead of setting it.
+  pan = { x: e.clientX, y: e.clientY, moved: false, onPin: !!e.target.closest('.pin') };
   viewport.classList.add('grabbing');
-  viewport.setPointerCapture(e.pointerId);
 });
 viewport.addEventListener('pointermove', (e) => {
   if (!pan) return;
   view.panBy(e.clientX - pan.x, e.clientY - pan.y);
-  if (Math.hypot(e.clientX - pan.x, e.clientY - pan.y) > 3) pan.moved = true;
+  if (Math.hypot(e.clientX - pan.x, e.clientY - pan.y) > 3) {
+    // Capture only once this is a drag. Taking it on pointerdown would
+    // retarget the click that a plain tap still needs to deliver.
+    if (!pan.moved) { pan.moved = true; try { viewport.setPointerCapture(e.pointerId); } catch { /* not ours */ } }
+  }
   pan.x = e.clientX;
   pan.y = e.clientY;
 });
-viewport.addEventListener('pointerup', (e) => {
+const endPan = (e) => {
   viewport.classList.remove('grabbing');
-  if (pan && !pan.moved && !e.target.closest('.pin')) { view.focus = null; view.following = null; }
+  if (pan && !pan.moved && !pan.onPin) { view.focus = null; view.following = null; }
+  if (pan?.moved) { try { viewport.releasePointerCapture(e.pointerId); } catch { /* already gone */ } }
   pan = null;
-});
+};
+viewport.addEventListener('pointerup', endPan);
+// A cancelled gesture used to leave `pan` truthy, so the map kept panning with
+// no button held.
+viewport.addEventListener('pointercancel', endPan);
 viewport.addEventListener('wheel', (e) => {
   e.preventDefault();
   view.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY);
@@ -630,6 +658,7 @@ addEventListener('keydown', (e) => {
   // e.target is the window when nothing is focused, and windows have no
   // .matches — guard rather than assume an element.
   if (e.target?.matches?.('input, select, textarea')) return;
+  if (!book || !clock) return;              // a book that failed to load
   const step = e.shiftKey ? 10 : 1;
   const mode = e.repeat ? 'keyRepeat' : 'key';
   const K = {
@@ -647,9 +676,9 @@ addEventListener('keydown', (e) => {
     m: cycleScrim,
     r: () => view.fit(),
     '0': () => { view.focus = null; view.following = null; },
-    '+': () => view.zoomAt(1.25, innerWidth / 2, innerHeight / 2),
-    '=': () => view.zoomAt(1.25, innerWidth / 2, innerHeight / 2),
-    '-': () => view.zoomAt(0.8, innerWidth / 2, innerHeight / 2),
+    '+': () => zoomCentre(1.25),
+    '=': () => zoomCentre(1.25),
+    '-': () => zoomCentre(0.8),
     '?': () => { $('help').hidden = !$('help').hidden; },
     '<': () => setSpeed(SPEEDS[Math.max(0, SPEEDS.indexOf(clock.speed) - 1)]),
     '>': () => setSpeed(SPEEDS[Math.min(SPEEDS.length - 1, SPEEDS.indexOf(clock.speed) + 1)]),
@@ -705,13 +734,31 @@ function hopWaypoint(dir) {
 
 // ---------------------------------------------------------- file loading
 
+/** The map's centre in client coords — not the window's, which sits under the bar. */
+function zoomCentre(factor) {
+  const r = $('world-svg').getBoundingClientRect();
+  view.zoomAt(factor, r.left + r.width / 2, r.top + r.height / 2);
+}
+
+/** Loading a book the reader chose. A bad file is a note, never a silent nothing. */
+async function loadBookFile(f) {
+  let raw;
+  try {
+    raw = JSON.parse(await f.text());
+  } catch (err) {
+    showProblems([`${f.name} is not valid JSON: ${err.message}`]);
+    return;
+  }
+  await loadBook(raw);
+}
+
 function wireFiles() {
   $('pick-image').addEventListener('change', (e) => {
     if (e.target.files[0]) useImageBlob(e.target.files[0]);
   });
   $('pick-book').addEventListener('change', async (e) => {
     const f = e.target.files[0];
-    if (f) await loadBook(JSON.parse(await f.text()));
+    if (f) await loadBookFile(f);
   });
   $('dismiss-card').addEventListener('click', () => { $('card').hidden = true; });
 
@@ -725,7 +772,7 @@ function wireFiles() {
     document.body.classList.remove('dragging-file');
     for (const f of e.dataTransfer.files) {
       if (f.type.startsWith('image/')) await useImageBlob(f);
-      else if (/\.json$/i.test(f.name)) await loadBook(JSON.parse(await f.text()));
+      else if (/\.json$/i.test(f.name)) await loadBookFile(f);
     }
   });
 }
@@ -759,11 +806,14 @@ const start = params.get('book')
 picker.value = BOOKS.some((b) => b.file === start) ? start : BOOKS[0].file;
 
 await openBookFile(picker.value);
-setSpeed(pref('speed', 1));
+// A book that failed to load leaves `clock` null. This is a top-level-await
+// module, so throwing here would silently skip every listener below it.
+if (clock) setSpeed(pref('speed', 1));
 $('play').addEventListener('click', () => {
-  $('play').textContent = clock.playing ? '❚❚ Pause' : '▶︎ Play';
+  if (clock) $('play').textContent = clock.playing ? '❚❚ Pause' : '▶︎ Play';
 });
 setInterval(() => {
+  if (!clock) return;
   $('play').textContent = clock.playing ? '❚❚ Pause' : '▶︎ Play';
   if (book) setPref(`page:${book.id}`, Math.round(clock.shown));
 }, 400);

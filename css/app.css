@@ -2,10 +2,12 @@
   --bg:      #0A0C10;
   --bg-2:    #11151C;
   --bg-3:    #171C25;
+  --bg-4:    #202735;           /* lifted fill: controls you can press */
   --line:    #232A36;
+  --line-2:  #586578;           /* the edge of a control: 3.09:1 on --bg-2 */
   --text:    #E7ECF3;
   --dim:     #9BA6B6;
-  --mute:    #5F6B7D;
+  --mute:    #828EA0;           /* was #5F6B7D: 3.16:1 on --bg-3, now 5.14:1 */
   --accent:  #7DD3FC;
   --warn:    #FFB847;
   --keyline: #05070A;           /* outline behind anything drawn over the map */
@@ -30,11 +32,22 @@ body {
   font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   display: grid;
   grid-template-rows: 1fr auto;
+  /* minmax(0,…) not `auto`: an auto column is sized to max-content, so a
+     60-chapter strip of nowrap titles widened the page to 14000px and
+     centred the map off-screen. Nothing may widen the viewport. */
+  grid-template-columns: minmax(0, 1fr);
   overflow: hidden;
   user-select: none;
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Announcements go to a live region no one can see: the chips over the map
+   say it in pixels, this says the same thing to a screen reader. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
 
 /* ---------------------------------------------------------------- the map */
 
@@ -79,6 +92,20 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* pins */
 .pin { transition: opacity var(--t-fast) var(--e-out); }
 .pin .body { stroke: var(--keyline); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+/* The role silhouette that replaces the disc above ~15px. It needs the keyline
+   more than the disc did, not less: a figure's edge is far longer and thinner,
+   and it is the only thing separating a high-chroma fill from an unknown
+   illustrated map. paint-order puts the fill back over the inner half of the
+   stroke so a staff or an ear is not swallowed by its own outline.
+   (stroke-width here is a *path* rule. The ban in CLAUDE.md is on font-size and
+   stroke-width for SVG *text* — view.js sets those inline, per frame.) */
+.pin .icon {
+  stroke: var(--keyline); stroke-width: 2;
+  paint-order: stroke fill; stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  /* the wrapping <g> carries the placement; these keep a CSS scale honest */
+  transform-box: fill-box; transform-origin: 50% 50%;
+}
 .pin .wake { stroke: none; }
 .pin .mono {
   font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 700;
@@ -103,10 +130,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   100% { r: 15; opacity: 0;    stroke-width: 0.5; }
 }
 
-.pin.debut .body { animation: debut 420ms var(--e-pop); }
+.pin.debut .body,
+.pin.debut .icon { animation: debut 420ms var(--e-pop); }
 @keyframes debut { from { opacity: 0; transform: scale(0.2); } to { opacity: 1; transform: scale(1); } }
 
-.pin.nudge .body { animation: nudge 260ms var(--e-pop); }
+.pin.nudge .body,
+.pin.nudge .icon { animation: nudge 260ms var(--e-pop); }
 @keyframes nudge { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
 .ring {
@@ -143,8 +172,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 #readout {
   position: absolute; top: 12px; left: 12px; width: 258px;
-  background: rgba(17, 21, 28, 0.82); backdrop-filter: blur(12px);
+  background: rgba(17, 21, 28, 0.92); backdrop-filter: blur(12px);
   border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  font-size: 13px;
+  /* A 14-name cast measured 431px and ran off the bottom of the map area.
+     Scroll the panel instead of letting it leave the viewport. */
+  max-height: calc(100% - 24px); overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: #3A4454 transparent;
 }
 #readout .head {
   display: flex; justify-content: space-between; gap: 8px;
@@ -187,20 +221,31 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   padding: 0 14px 10px; touch-action: none;
 }
 
-#chapters { display: flex; height: 22px; margin: 8px 0 10px; border-radius: 5px; overflow: hidden; }
+#chapters { display: flex; height: 24px; margin: 8px 0 10px; border-radius: 5px; overflow: hidden; }
 .chap {
-  position: relative; flex: 0 0 auto; min-width: 0; background: var(--bg-3);
-  border-right: 1px solid var(--bg); font-size: 10.5px; color: var(--dim);
+  position: relative; flex: 0 1 auto; min-width: 0; background: var(--bg-3);
+  border-right: 1px solid var(--bg); font-size: 11px; color: var(--text);
   display: flex; align-items: center; padding: 0 7px; gap: 6px; cursor: pointer;
   overflow: hidden; white-space: nowrap;
+  container-type: inline-size;
   transition: transform var(--t-fast) var(--e-out), background var(--t-fast), color var(--t-fast);
 }
+/* A 60-chapter book gives each cell ~23px. Drop the title so the number
+   gets the room, rather than paying 6px of gap for an invisible span. */
+@container (max-width: 62px) { .chap .t { display: none; } }
 .chap:last-child { border-right: 0; }
-.chap:hover { background: #1E242F; color: var(--text); transform: translateY(-2px); }
+.chap:hover { background: #262E3C; color: var(--text); transform: translateY(-2px); }
+/* app.js has to make the cell focusable (tabIndex/role/keydown); this is the
+   ring it gets when it does. Inset, because #chapters clips its overflow. */
+.chap:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .chap .t { overflow: hidden; text-overflow: ellipsis; }
-.chap.current { background: color-mix(in srgb, var(--accent) 14%, var(--bg-3)); color: var(--text); }
+.chap.current {
+  background: color-mix(in srgb, var(--accent) 26%, var(--bg-3));
+  color: var(--text); font-weight: 700;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
 .chap.current::after {
-  content: ''; position: absolute; left: 0; bottom: 0; height: 2px;
+  content: ''; position: absolute; left: 0; bottom: 0; height: 3px;
   width: var(--pct, 0%); background: var(--accent);
 }
 
@@ -216,20 +261,20 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: flex; align-items: center;
 }
 #rail::before {
-  content: ''; position: absolute; left: 0; right: 0; height: 6px;
-  background: var(--bg-3); border-radius: 3px;
+  content: ''; position: absolute; left: 0; right: 0; height: 8px;
+  background: var(--bg-4); border-radius: 4px;
 }
 #rail .fill {
-  position: absolute; left: 0; height: 6px; border-radius: 3px;
-  background: color-mix(in srgb, var(--accent) 35%, var(--bg-3));
+  position: absolute; left: 0; height: 8px; border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 60%, var(--bg-4));
 }
 #rail .thumb {
-  position: absolute; width: 14px; height: 14px; border-radius: 50%;
+  position: absolute; width: 16px; height: 16px; border-radius: 50%;
   background: var(--text); border: 2px solid var(--bg);
   transform: translateX(-50%);
   transition: width var(--t-fast) var(--e-out), height var(--t-fast) var(--e-out);
 }
-#rail.dragging .thumb { width: 18px; height: 18px; }
+#rail.dragging .thumb { width: 20px; height: 20px; }
 #rail .ticks { position: absolute; inset: 0; width: 100%; height: 100%; }
 #rail .chap-tick { stroke: rgba(231, 236, 243, 0.22); stroke-width: 1; }
 #rail .chap-tick.current { stroke: rgba(231, 236, 243, 0.70); }
@@ -246,14 +291,19 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 #transport {
   display: flex; align-items: center; gap: 10px; margin-top: 6px;
-  font-size: 11.5px; color: var(--dim);
+  font-size: 13px; color: var(--text);
 }
 #transport .btn {
-  background: var(--bg-3); border: 1px solid var(--line); border-radius: 6px;
-  padding: 4px 9px; color: var(--text); transition: border-color var(--t-fast);
+  background: var(--bg-4); border: 1px solid var(--line-2); border-radius: 6px;
+  padding: 7px 11px; color: var(--text);
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
-#transport .btn:hover { border-color: #3D444F; }
-#transport .btn.on { background: color-mix(in srgb, var(--accent) 18%, var(--bg-3)); border-color: var(--accent); }
+#transport .btn:hover { background: #2A3240; border-color: #7D8CA1; }
+#transport .btn.on {
+  background: color-mix(in srgb, var(--accent) 26%, var(--bg-4));
+  border-color: var(--accent); color: #F1FAFF; font-weight: 600;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
 #transport .spacer { flex: 1; }
 #transport .page { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
 
@@ -304,13 +354,18 @@ body.dragging-file #drop-hint { opacity: 1; }
   position: absolute; inset: 0; z-index: 20; display: grid; place-content: center;
   background: rgba(10, 12, 16, 0.88); backdrop-filter: blur(8px);
 }
-#help dl {
+/* The <h2>s used to sit inside the <dl>, which is invalid and drops the list
+   semantics. They are siblings of the lists now; subgrid keeps every group's
+   key column in one line. */
+#help .keys {
   display: grid; grid-template-columns: auto 1fr; gap: 6px 16px;
-  margin: 0; font-size: 12.5px; max-height: 80vh;
+  font-size: 13px; max-height: 80vh;
 }
+#help dl { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid;
+  gap: 6px 16px; margin: 0; }
 #help dt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); white-space: nowrap; }
 #help dd { margin: 0; color: var(--dim); }
-#help h2 { grid-column: 1 / -1; font-size: 11px; text-transform: uppercase;
+#help h2 { grid-column: 1 / -1; font-size: 11.5px; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--mute); margin: 12px 0 2px; }
 #help h2:first-child { margin-top: 0; }
 
@@ -320,6 +375,9 @@ body.dragging-file #drop-hint { opacity: 1; }
   #readout { width: auto; left: 8px; right: 8px; top: 8px; }
   #lanes { height: 28px; }
   .chap .t { display: none; }
+  /* The bigger buttons no longer all fit on one line in a phone-width bar,
+     and body's overflow:hidden would clip the last of them off the screen. */
+  #transport { flex-wrap: wrap; row-gap: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
