@@ -18,6 +18,7 @@ const el = (tag, attrs = {}) => {
 
 const BOOKS = [
   { file: 'data/shannara.json', label: 'The Sword of Shannara' },
+  { file: 'data/elfstones.json', label: 'The Elfstones of Shannara' },
   { file: 'data/demo-island.json', label: 'The Salt Road (demo)' },
 ];
 const SPEEDS = [0.25, 0.5, 1, 2, 4];

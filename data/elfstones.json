@@ -1,0 +1,104 @@
+{
+  "id": "elfstones",
+  "title": "The Elfstones of Shannara",
+  "author": "Terry Brooks",
+  "readAlong": true,
+  "map": {
+    "name": "The Four Lands",
+    "file": "data/maps/four-lands.webp",
+    "aspect": 0.7417,
+    "hint": "2288 x 1697 endpaper scan, WebP q88 — the same sheet the Sword data was picked on"
+  },
+
+  "_comment": "A scaffold, not a dataset. Places, cast and a chapter list are here; waypoints are not, because they are yours to write as you read. Every coordinate below was measured off the engraved label on data/maps/four-lands.webp: crop the region, read the label, divide the pixel by 2288 (x) and 1697 (y). Coordinates belong to the scan they were picked on, so do not transplant them to a different edition's map. CHECK THE CHAPTER COUNT against your copy before you get far — `chapters` below is 60 entries and I am not certain that is right. If you write a waypoint for a chapter that is not listed, the readout will say so rather than guessing.",
+
+  "places": {
+    "arborlon":        { "name": "Arborlon",           "x": 0.303, "y": 0.351 },
+    "emberen":         { "name": "Emberen",            "x": 0.326, "y": 0.326 },
+    "valley-of-rhenn": { "name": "Valley of Rhenn",    "x": 0.336, "y": 0.374 },
+    "drey-wood":       { "name": "Drey Wood",          "x": 0.309, "y": 0.411 },
+    "sarandanon":      { "name": "Sarandanon Valley",  "x": 0.225, "y": 0.332 },
+    "rill-song":       { "name": "Rill Song River",    "x": 0.261, "y": 0.411 },
+    "baen-draw":       { "name": "Baen Draw",          "x": 0.175, "y": 0.272 },
+    "kensrowe":        { "name": "Kensrowe Mountains", "x": 0.239, "y": 0.221 },
+    "worl-run":        { "name": "Worl Run",           "x": 0.120, "y": 0.247 },
+    "halys-cut":       { "name": "Halys Cut",          "x": 0.137, "y": 0.311 },
+    "innisbore":       { "name": "Innisbore Lake",     "x": 0.144, "y": 0.365 },
+    "syioned":         { "name": "Syioned",            "x": 0.167, "y": 0.378 },
+    "breakline":       { "name": "Breakline Mountains","x": 0.149, "y": 0.197 },
+
+    "matted-brakes":   { "name": "Matted Brakes",      "x": 0.265, "y": 0.477 },
+    "pykon":           { "name": "The Pykon",          "x": 0.290, "y": 0.515 },
+    "grimpen-ward":    { "name": "Grimpen Ward",       "x": 0.184, "y": 0.517 },
+    "whistle-ridge":   { "name": "Whistle Ridge",      "x": 0.226, "y": 0.531 },
+    "wilderun":        { "name": "The Wilderun",       "x": 0.171, "y": 0.566 },
+    "spires-reach":    { "name": "Spires Reach",       "x": 0.232, "y": 0.575 },
+    "shroudslip":      { "name": "Shroudslip",         "x": 0.303, "y": 0.588 },
+    "hollows":         { "name": "The Hollows",        "x": 0.205, "y": 0.615 },
+    "irrybis":         { "name": "Irrybis Mountains",  "x": 0.201, "y": 0.674 },
+    "rock-spur":       { "name": "Rock Spur",          "x": 0.144, "y": 0.626 },
+    "myrian-lake":     { "name": "Myrian Lake",        "x": 0.340, "y": 0.665 },
+    "bakrabru":        { "name": "Bakrabru",           "x": 0.303, "y": 0.683 },
+
+    "safehold":        { "name": "Safehold",           "x": 0.212, "y": 0.628 },
+
+    "mermidon":        { "name": "Mermidon River",     "x": 0.377, "y": 0.504 },
+    "streleheim":      { "name": "Streleheim Plains",  "x": 0.405, "y": 0.435 },
+    "tirfing":         { "name": "Grasslands of the Tirfing", "x": 0.396, "y": 0.588 },
+    "callahorn":       { "name": "Callahorn",          "x": 0.446, "y": 0.546 },
+    "kern":            { "name": "Kern",               "x": 0.453, "y": 0.492 },
+    "tyrsis":          { "name": "Tyrsis",             "x": 0.533, "y": 0.555 },
+    "varfleet":        { "name": "Varfleet",           "x": 0.598, "y": 0.535 },
+
+    "paranor":         { "name": "Paranor",            "x": 0.545, "y": 0.432 },
+    "dragons-teeth":   { "name": "Dragon's Teeth",     "x": 0.554, "y": 0.482 },
+    "valley-of-shale": { "name": "Valley of Shale",    "x": 0.613, "y": 0.465 },
+    "hadeshorn":       { "name": "Hadeshorn",          "x": 0.608, "y": 0.480 },
+    "jannisson-pass":  { "name": "Jannisson Pass",     "x": 0.615, "y": 0.361 },
+    "rabb-plains":     { "name": "Rabb Plains",        "x": 0.678, "y": 0.405 },
+
+    "storlock":        { "name": "Storlock",           "x": 0.710, "y": 0.470 },
+    "wolfsktaag":      { "name": "Wolfsktaag",         "x": 0.752, "y": 0.505 },
+    "silver-river":    { "name": "Silver River",       "x": 0.715, "y": 0.576 },
+    "culhaven":        { "name": "Culhaven",           "x": 0.760, "y": 0.588 },
+    "shady-vale":      { "name": "Shady Vale",         "x": 0.487, "y": 0.686 }
+  },
+
+  "_places_note": "safehold is the one coordinate NOT read off a label — the map does not draw it. It is placed just east of the Hollows, where the book puts it. Move it when you have read enough to disagree.",
+
+  "routes": [],
+
+  "_characters_note": "Only the people the opening chapters introduce. Adding the whole cast up front would spoil the book for you in the roster, which lists everyone a file declares. Add each new name as you meet them.",
+
+  "characters": [
+    { "id": "wil",      "name": "Wil Ohmsford",       "role": "Shea's grandson, studying healing at Storlock", "icon": "elf" },
+    { "id": "allanon",  "name": "Allanon",            "role": "the Druid",                                     "icon": "druid" },
+    { "id": "amberle",  "name": "Amberle Elessedil",  "role": "Chosen, and the King's granddaughter",          "icon": "woman" },
+    { "id": "eventine", "name": "Eventine Elessedil", "role": "King of the Elves",                             "icon": "elf" },
+    { "id": "ander",    "name": "Ander Elessedil",    "role": "his second son",                                "icon": "elf" },
+    { "id": "arion",    "name": "Arion Elessedil",    "role": "his elder son",                                 "icon": "elf" },
+    { "id": "crispin",  "name": "Crispin",            "role": "Captain of the Home Guard",                     "icon": "man" },
+    { "id": "eretria",  "name": "Eretria",            "role": "of the Rovers",                                 "icon": "woman" }
+  ],
+
+  "_chapters_note": "Numbers only. A chapter title is the densest spoiler a novel has, and these are placeholders anyway — the count is a guess. Correct it against your copy.",
+
+  "chapters": [
+    { "n": 1 }, { "n": 2 }, { "n": 3 }, { "n": 4 }, { "n": 5 },
+    { "n": 6 }, { "n": 7 }, { "n": 8 }, { "n": 9 }, { "n": 10 },
+    { "n": 11 }, { "n": 12 }, { "n": 13 }, { "n": 14 }, { "n": 15 },
+    { "n": 16 }, { "n": 17 }, { "n": 18 }, { "n": 19 }, { "n": 20 },
+    { "n": 21 }, { "n": 22 }, { "n": 23 }, { "n": 24 }, { "n": 25 },
+    { "n": 26 }, { "n": 27 }, { "n": 28 }, { "n": 29 }, { "n": 30 },
+    { "n": 31 }, { "n": 32 }, { "n": 33 }, { "n": 34 }, { "n": 35 },
+    { "n": 36 }, { "n": 37 }, { "n": 38 }, { "n": 39 }, { "n": 40 },
+    { "n": 41 }, { "n": 42 }, { "n": 43 }, { "n": 44 }, { "n": 45 },
+    { "n": 46 }, { "n": 47 }, { "n": 48 }, { "n": 49 }, { "n": 50 },
+    { "n": 51 }, { "n": 52 }, { "n": 53 }, { "n": 54 }, { "n": 55 },
+    { "n": 56 }, { "n": 57 }, { "n": 58 }, { "n": 59 }, { "n": 60 }
+  ],
+
+  "_waypoints_note": "Yours. A line looks like { \"who\": [\"wil\",\"amberle\"], \"ch\": 12, \"at\": 0.4, \"place\": \"pykon\" } — `at` is how far through the chapter, 0 to 1, and defaults to the start. `\"place\": null` takes someone off the map. Until there is at least one line here the app reports an empty book, which is the intended state of a scaffold.",
+
+  "waypoints": []
+}

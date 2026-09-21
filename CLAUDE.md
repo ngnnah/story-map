@@ -3,7 +3,7 @@
 Live: https://ngnnah.github.io/story-map/ · Repo: github.com/ngnnah/story-map (public)
 
 Watch a story's characters move across its own map, page by page. Zero
-dependencies, no build step. `npm test` (79 cases) and `npm run serve`.
+dependencies, no build step. `npm test` (144 cases) and `npm run serve`.
 
 **It needs an HTTP origin.** `file://` breaks ES module imports, `fetch` of the
 book JSON, and IndexedDB. Use `npm run serve`.
@@ -16,10 +16,24 @@ each of these was a deliberate decision — don't undo one without reading why:
 | | |
 |---|---|
 | two waypoints at the **same place** | bracket a stay; the pin does not drift |
+| a waypoint after a `null` | a **break** in the trail, not a journey — the pen lifts |
 | `"place": null` | off the map (dead, sailed off, no longer mentioned); leaves a crosshatch |
 | `"who": [...]` | a party moves in one line instead of eight |
 | no authored route | straight line, drawn **dotted**, bowed into a per-character lane |
 | past the last waypoint | held in place, but drawn **faded** — that's a rule, not something the book said |
+
+## The axis is per-book
+
+`book.axis` is `'page'` or `'chapter'`, decided by whether every chapter
+carries a `startPage`. A waypoint says when as either `page` or `ch` + `at`
+(0..1 through that chapter); both resolve to one float, which is why
+`timeline.js` and `geometry.js` never had to learn about it. On the chapter
+axis a position of 12.4 *is* chapter 12, 40% through, the range is
+`[1, nChapters + 1]`, and no page number is shown because none exists.
+
+`clock.js` has per-axis feel constants (`UNITS`). They are not decoration: the
+page-axis clamps would run a 60-chapter book in thirty seconds and hold it
+permanently inside a ritard window.
 
 ## Three things that will bite you
 
@@ -63,9 +77,21 @@ looks like a UI, out of phase it looks alive.
 
 ## Where the work actually is
 
-**`data/shannara.json` covers only the first six chapters (to ~p.96) of 726.**
-The code is essentially done; the dataset is the project. Expect this to be the
-long part.
+**`data/shannara.json` covers only the first six chapters (to ~p.96) of 726,
+and `data/elfstones.json` is a scaffold with no waypoints at all.** The code is
+essentially done; the dataset is the project. Expect this to be the long part.
+
+Elfstones ships 44 places, the opening cast, and 60 numbered chapters on the
+chapter axis. Its chapter count is a guess — check it against a copy. Only
+characters the first chapters introduce are declared, because the roster lists
+everyone a file declares and that is a spoiler for a book being read.
+
+**Picking coordinates without dev-coords.html.** Crop the region out of
+`data/maps/four-lands.webp` with `sips`, read the engraved label, and divide by
+2288 (x) and 1697 (y). That is how the Elfstones places were picked and how
+four bad Sword coordinates were found. Coordinates belong to the scan they were
+picked on: another edition's map can confirm topology but must never be used to
+pick numbers.
 
 To extend it: open `dev-coords.html`, load `data/maps/four-lands.webp`, click
 places you need, copy the JSON into `places`. Then add waypoints as you read.
@@ -73,10 +99,21 @@ Most places for the whole book are already in there — Paranor, Culhaven,
 Storlock, the Hall of Kings, Skull Kingdom and the rest — so mostly you're
 adding `waypoints` and the occasional bent `route`.
 
+Do not trust a coordinate because it parses. `black-oaks` sat west of Shady
+Vale for the life of the file, so the company's chapter 6 leg drew them walking
+back past the village they had just fled. Neither the endpaper nor the
+Elfstones edition labels that forest; only the colour edition does.
+
 Characters already declared with no waypoints yet (Balinor, Hendel, Durin,
 Dayel) render as "not yet" and break nothing. That's the intended way to work.
 
 ## Known limits (documented in the README, not bugs)
+
+- **A scaffolded book leaks its place names.** All 44 Elfstones places draw a
+  label at zoom >= 2.2, Safehold and the Hollows included. Today it is masked —
+  with no waypoints the camera cannot frame an action box, so it sits at k=1
+  where labels are hidden — but the first waypoints you write will zoom it in
+  and reveal the lot. The reading-position wall in the spec is the fix.
 
 - **The axis is page order, not story time.** Two POV threads narrated one
   after the other make the second character freeze, then jump. Fixing it means
