@@ -8,94 +8,1131 @@
     "aspect": 0.7417,
     "hint": "2288 x 1697 endpaper scan, WebP q88"
   },
-  "pages": [1, 726],
-
-  "_comment": "Coordinates are fractions of the map image, read off the scan. Waypoints cover the opening movement of the book and stop where the reading stops — the app renders a partial book without complaint.",
-
-  "places": {
-    "shady-vale":     { "name": "Shady Vale",      "x": 0.487, "y": 0.686 },
-    "duln-forests":   { "name": "Duln Forests",    "x": 0.489, "y": 0.658 },
-    "leah":           { "name": "Leah",            "x": 0.556, "y": 0.674 },
-    "rainbow-lake":   { "name": "Rainbow Lake",    "x": 0.553, "y": 0.588 },
-    "mist-marsh":     { "name": "Mist Marsh",      "x": 0.606, "y": 0.628 },
-    "black-oaks":     { "name": "Black Oaks",      "x": 0.600, "y": 0.668 },
-    "kern":           { "name": "Kern",            "x": 0.453, "y": 0.492 },
-    "tyrsis":         { "name": "Tyrsis",          "x": 0.533, "y": 0.555 },
-    "varfleet":       { "name": "Varfleet",        "x": 0.598, "y": 0.535 },
-    "southwatch":     { "name": "Southwatch",      "x": 0.596, "y": 0.555 },
-    "callahorn":      { "name": "Callahorn",       "x": 0.446, "y": 0.546 },
-    "tirfing":        { "name": "Grasslands of the Tirfing", "x": 0.396, "y": 0.588 },
-    "kennon-pass":    { "name": "Kennon Pass",     "x": 0.535, "y": 0.497 },
-    "dragons-teeth":  { "name": "Dragon's Teeth",  "x": 0.554, "y": 0.482 },
-    "paranor":        { "name": "Paranor",         "x": 0.545, "y": 0.432 },
-    "hall-of-kings":  { "name": "Hall of Kings",   "x": 0.622, "y": 0.436 },
-    "valley-of-shale":{ "name": "Valley of Shale", "x": 0.613, "y": 0.465 },
-    "hadeshorn":      { "name": "Hadeshorn",       "x": 0.608, "y": 0.480 },
-    "storlock":       { "name": "Storlock",        "x": 0.710, "y": 0.470 },
-    "culhaven":       { "name": "Culhaven",        "x": 0.760, "y": 0.588 },
-    "silver-river":   { "name": "Silver River",    "x": 0.715, "y": 0.576 },
-    "wolfsktaag":     { "name": "Wolfsktaag",      "x": 0.752, "y": 0.505 },
-    "pass-of-jade":   { "name": "Pass of Jade",    "x": 0.745, "y": 0.511 },
-    "hearthstone":    { "name": "Hearthstone",     "x": 0.820, "y": 0.466 },
-    "anar-forest":    { "name": "Anar Forest",     "x": 0.780, "y": 0.548 },
-    "rabb-plains":    { "name": "Rabb Plains",     "x": 0.678, "y": 0.405 },
-    "jannisson-pass": { "name": "Jannisson Pass",  "x": 0.615, "y": 0.361 },
-    "streleheim":     { "name": "Streleheim Plains","x": 0.405, "y": 0.435 },
-    "kierlak-desert": { "name": "Kierlak Desert",  "x": 0.515, "y": 0.260 },
-    "skull-kingdom":  { "name": "Skull Kingdom",   "x": 0.563, "y": 0.252 },
-    "skull-mountain": { "name": "Skull Mountain",  "x": 0.547, "y": 0.270 },
-    "arborlon":       { "name": "Arborlon",        "x": 0.303, "y": 0.351 },
-    "bakrabru":       { "name": "Bakrabru",        "x": 0.303, "y": 0.683 }
+  "_comment": "THE CHAPTER NUMBERS BELOW ARE A RECONSTRUCTION. The order of the journey is what I am confident about; which chapter each beat falls in is my estimate, and a beat placed two chapters early costs nothing but a slightly wrong position on the rail. Correct them as you like — `ch` is the only field that needs touching. This file moved from the page axis to the chapter axis because page numbers belong to one printing: the six real startPages that were here are kept in _knownStartPages, and if you ever fill in the rest, put startPage back on every chapter and the same waypoints re-resolve to real pages with nothing retyped. Coordinates are fractions of data/maps/four-lands.webp, read off the engraved labels.",
+  "_knownStartPages": {
+    "1": 1,
+    "2": 14,
+    "3": 30,
+    "4": 44,
+    "5": 60,
+    "6": 78,
+    "_of": "a 726-page printing"
   },
-
+  "places": {
+    "shady-vale": {
+      "name": "Shady Vale",
+      "x": 0.487,
+      "y": 0.686
+    },
+    "duln-forests": {
+      "name": "Duln Forests",
+      "x": 0.489,
+      "y": 0.658
+    },
+    "leah": {
+      "name": "Leah",
+      "x": 0.556,
+      "y": 0.674
+    },
+    "rainbow-lake": {
+      "name": "Rainbow Lake",
+      "x": 0.553,
+      "y": 0.588
+    },
+    "mist-marsh": {
+      "name": "Mist Marsh",
+      "x": 0.606,
+      "y": 0.628
+    },
+    "black-oaks": {
+      "name": "Black Oaks",
+      "x": 0.6,
+      "y": 0.668
+    },
+    "kern": {
+      "name": "Kern",
+      "x": 0.453,
+      "y": 0.492
+    },
+    "tyrsis": {
+      "name": "Tyrsis",
+      "x": 0.533,
+      "y": 0.555
+    },
+    "varfleet": {
+      "name": "Varfleet",
+      "x": 0.598,
+      "y": 0.535
+    },
+    "southwatch": {
+      "name": "Southwatch",
+      "x": 0.596,
+      "y": 0.555
+    },
+    "callahorn": {
+      "name": "Callahorn",
+      "x": 0.446,
+      "y": 0.546
+    },
+    "tirfing": {
+      "name": "Grasslands of the Tirfing",
+      "x": 0.396,
+      "y": 0.588
+    },
+    "kennon-pass": {
+      "name": "Kennon Pass",
+      "x": 0.535,
+      "y": 0.497
+    },
+    "dragons-teeth": {
+      "name": "Dragon's Teeth",
+      "x": 0.554,
+      "y": 0.482
+    },
+    "paranor": {
+      "name": "Paranor",
+      "x": 0.545,
+      "y": 0.432
+    },
+    "hall-of-kings": {
+      "name": "Hall of Kings",
+      "x": 0.622,
+      "y": 0.436
+    },
+    "valley-of-shale": {
+      "name": "Valley of Shale",
+      "x": 0.613,
+      "y": 0.465
+    },
+    "hadeshorn": {
+      "name": "Hadeshorn",
+      "x": 0.608,
+      "y": 0.48
+    },
+    "storlock": {
+      "name": "Storlock",
+      "x": 0.71,
+      "y": 0.47
+    },
+    "culhaven": {
+      "name": "Culhaven",
+      "x": 0.76,
+      "y": 0.588
+    },
+    "silver-river": {
+      "name": "Silver River",
+      "x": 0.715,
+      "y": 0.576
+    },
+    "wolfsktaag": {
+      "name": "Wolfsktaag",
+      "x": 0.752,
+      "y": 0.505
+    },
+    "pass-of-jade": {
+      "name": "Pass of Jade",
+      "x": 0.745,
+      "y": 0.511
+    },
+    "hearthstone": {
+      "name": "Hearthstone",
+      "x": 0.82,
+      "y": 0.466
+    },
+    "anar-forest": {
+      "name": "Anar Forest",
+      "x": 0.78,
+      "y": 0.548
+    },
+    "rabb-plains": {
+      "name": "Rabb Plains",
+      "x": 0.678,
+      "y": 0.405
+    },
+    "jannisson-pass": {
+      "name": "Jannisson Pass",
+      "x": 0.615,
+      "y": 0.361
+    },
+    "streleheim": {
+      "name": "Streleheim Plains",
+      "x": 0.405,
+      "y": 0.435
+    },
+    "kierlak-desert": {
+      "name": "Kierlak Desert",
+      "x": 0.515,
+      "y": 0.26
+    },
+    "skull-kingdom": {
+      "name": "Skull Kingdom",
+      "x": 0.563,
+      "y": 0.252
+    },
+    "skull-mountain": {
+      "name": "Skull Mountain",
+      "x": 0.547,
+      "y": 0.27
+    },
+    "arborlon": {
+      "name": "Arborlon",
+      "x": 0.303,
+      "y": 0.351
+    },
+    "bakrabru": {
+      "name": "Bakrabru",
+      "x": 0.303,
+      "y": 0.683
+    }
+  },
   "routes": [
-    { "from": "shady-vale", "to": "leah", "via": [[0.515, 0.690], [0.538, 0.682]] },
-    { "from": "leah", "to": "rainbow-lake", "via": [[0.567, 0.645], [0.560, 0.612]] },
-    { "from": "shady-vale", "to": "culhaven",
-      "via": [[0.520, 0.672], [0.575, 0.640], [0.640, 0.612], [0.710, 0.598]] },
-    { "from": "culhaven", "to": "storlock", "via": [[0.745, 0.548], [0.722, 0.505]] },
-    { "from": "storlock", "to": "paranor",
-      "via": [[0.668, 0.448], [0.620, 0.428], [0.580, 0.428]] },
-    { "from": "tyrsis", "to": "paranor", "via": [[0.532, 0.520], [0.540, 0.480]] },
-    { "from": "paranor", "to": "skull-kingdom",
-      "via": [[0.556, 0.392], [0.578, 0.340], [0.572, 0.292]] }
+    {
+      "from": "shady-vale",
+      "to": "leah",
+      "via": [
+        [
+          0.515,
+          0.69
+        ],
+        [
+          0.538,
+          0.682
+        ]
+      ]
+    },
+    {
+      "from": "leah",
+      "to": "rainbow-lake",
+      "via": [
+        [
+          0.567,
+          0.645
+        ],
+        [
+          0.56,
+          0.612
+        ]
+      ]
+    },
+    {
+      "from": "shady-vale",
+      "to": "culhaven",
+      "via": [
+        [
+          0.52,
+          0.672
+        ],
+        [
+          0.575,
+          0.64
+        ],
+        [
+          0.64,
+          0.612
+        ],
+        [
+          0.71,
+          0.598
+        ]
+      ]
+    },
+    {
+      "from": "culhaven",
+      "to": "storlock",
+      "via": [
+        [
+          0.745,
+          0.548
+        ],
+        [
+          0.722,
+          0.505
+        ]
+      ]
+    },
+    {
+      "from": "storlock",
+      "to": "paranor",
+      "via": [
+        [
+          0.668,
+          0.448
+        ],
+        [
+          0.62,
+          0.428
+        ],
+        [
+          0.58,
+          0.428
+        ]
+      ]
+    },
+    {
+      "from": "tyrsis",
+      "to": "paranor",
+      "via": [
+        [
+          0.532,
+          0.52
+        ],
+        [
+          0.54,
+          0.48
+        ]
+      ]
+    },
+    {
+      "from": "paranor",
+      "to": "skull-kingdom",
+      "via": [
+        [
+          0.556,
+          0.392
+        ],
+        [
+          0.578,
+          0.34
+        ],
+        [
+          0.572,
+          0.292
+        ]
+      ]
+    }
   ],
-
   "characters": [
-    { "id": "shea",    "name": "Shea Ohmsford",  "role": "half-elf, heir of Jerle Shannara", "icon": "elf" },
-    { "id": "flick",   "name": "Flick Ohmsford", "role": "his brother", "icon": "man" },
-    { "id": "allanon", "name": "Allanon",        "role": "the last Druid", "icon": "druid" },
-    { "id": "menion",  "name": "Menion Leah",    "role": "Prince of Leah", "icon": "man" },
-    { "id": "balinor", "name": "Balinor Buckhannah", "role": "heir of Tyrsis", "icon": "man" },
-    { "id": "hendel",  "name": "Hendel",         "role": "Dwarf of Culhaven", "icon": "dwarf" },
-    { "id": "durin",   "name": "Durin Elessedil", "role": "Elf of Arborlon", "icon": "elf" },
-    { "id": "dayel",   "name": "Dayel Elessedil", "role": "his brother", "icon": "elf" }
+    {
+      "id": "shea",
+      "name": "Shea Ohmsford",
+      "role": "half-elf, heir of Jerle Shannara",
+      "icon": "elf"
+    },
+    {
+      "id": "flick",
+      "name": "Flick Ohmsford",
+      "role": "his brother",
+      "icon": "man"
+    },
+    {
+      "id": "allanon",
+      "name": "Allanon",
+      "role": "the last Druid",
+      "icon": "druid"
+    },
+    {
+      "id": "menion",
+      "name": "Menion Leah",
+      "role": "Prince of Leah",
+      "icon": "man"
+    },
+    {
+      "id": "balinor",
+      "name": "Balinor Buckhannah",
+      "role": "heir of Tyrsis",
+      "icon": "man"
+    },
+    {
+      "id": "hendel",
+      "name": "Hendel",
+      "role": "Dwarf of Culhaven",
+      "icon": "dwarf"
+    },
+    {
+      "id": "durin",
+      "name": "Durin Elessedil",
+      "role": "Elf of Arborlon",
+      "icon": "elf"
+    },
+    {
+      "id": "dayel",
+      "name": "Dayel Elessedil",
+      "role": "his brother",
+      "icon": "elf"
+    },
+    {
+      "id": "panamon",
+      "name": "Panamon Creel",
+      "role": "a thief, and better than he admits",
+      "icon": "man",
+      "color": "#C9A227"
+    },
+    {
+      "id": "keltset",
+      "name": "Keltset Mallicos",
+      "role": "a Rock Troll who does not speak",
+      "icon": "troll",
+      "color": "#8B9BA8"
+    },
+    {
+      "id": "eventine",
+      "name": "Eventine Elessedil",
+      "role": "King of the Elves",
+      "icon": "elf",
+      "color": "#6FBF8F"
+    },
+    {
+      "id": "palance",
+      "name": "Palance Buckhannah",
+      "role": "Balinor's brother, holding Tyrsis",
+      "icon": "man",
+      "color": "#A87C7C"
+    },
+    {
+      "id": "stenmin",
+      "name": "Stenmin",
+      "role": "the mystic at Palance's ear",
+      "icon": "man",
+      "color": "#7E6FA8"
+    },
+    {
+      "id": "shirl",
+      "name": "Shirl Ravenlock",
+      "role": "of Kern",
+      "icon": "woman",
+      "color": "#D99BB5"
+    },
+    {
+      "id": "orl-fane",
+      "name": "Orl Fane",
+      "role": "a Gnome with something he cannot let go of",
+      "icon": "gnome",
+      "color": "#9A8F6B"
+    }
   ],
-
   "chapters": [
-    { "n": 1, "startPage": 1,  "title": "Flick on the Vale road" },
-    { "n": 2, "startPage": 14, "title": "Allanon comes to the Vale" },
-    { "n": 3, "startPage": 30, "title": "The Sword and the Warlock Lord" },
-    { "n": 4, "startPage": 44, "title": "Flight from Shady Vale" },
-    { "n": 5, "startPage": 60, "title": "Menion joins them" },
-    { "n": 6, "startPage": 78, "title": "Into the Black Oaks" }
+    {
+      "n": 1
+    },
+    {
+      "n": 2
+    },
+    {
+      "n": 3
+    },
+    {
+      "n": 4
+    },
+    {
+      "n": 5
+    },
+    {
+      "n": 6
+    },
+    {
+      "n": 7
+    },
+    {
+      "n": 8
+    },
+    {
+      "n": 9
+    },
+    {
+      "n": 10
+    },
+    {
+      "n": 11
+    },
+    {
+      "n": 12
+    },
+    {
+      "n": 13
+    },
+    {
+      "n": 14
+    },
+    {
+      "n": 15
+    },
+    {
+      "n": 16
+    },
+    {
+      "n": 17
+    },
+    {
+      "n": 18
+    },
+    {
+      "n": 19
+    },
+    {
+      "n": 20
+    },
+    {
+      "n": 21
+    },
+    {
+      "n": 22
+    },
+    {
+      "n": 23
+    },
+    {
+      "n": 24
+    },
+    {
+      "n": 25
+    },
+    {
+      "n": 26
+    },
+    {
+      "n": 27
+    },
+    {
+      "n": 28
+    },
+    {
+      "n": 29
+    },
+    {
+      "n": 30
+    },
+    {
+      "n": 31
+    },
+    {
+      "n": 32
+    },
+    {
+      "n": 33
+    },
+    {
+      "n": 34
+    },
+    {
+      "n": 35
+    },
+    {
+      "n": 36
+    },
+    {
+      "n": 37
+    },
+    {
+      "n": 38
+    },
+    {
+      "n": 39
+    },
+    {
+      "n": 40
+    },
+    {
+      "n": 41
+    },
+    {
+      "n": 42
+    },
+    {
+      "n": 43
+    },
+    {
+      "n": 44
+    },
+    {
+      "n": 45
+    },
+    {
+      "n": 46
+    },
+    {
+      "n": 47
+    },
+    {
+      "n": 48
+    },
+    {
+      "n": 49
+    },
+    {
+      "n": 50
+    },
+    {
+      "n": 51
+    },
+    {
+      "n": 52
+    },
+    {
+      "n": 53
+    },
+    {
+      "n": 54
+    },
+    {
+      "n": 55
+    },
+    {
+      "n": 56
+    },
+    {
+      "n": 57
+    },
+    {
+      "n": 58
+    },
+    {
+      "n": 59
+    },
+    {
+      "n": 60
+    }
   ],
-
   "waypoints": [
-    { "who": ["shea", "flick"], "page": 1,  "place": "shady-vale", "note": "the inn at Shady Vale" },
-    { "who": "flick",   "page": 4,  "place": "duln-forests", "note": "meets a stranger on the road" },
-    { "who": "flick",   "page": 12, "place": "shady-vale" },
-
-    { "who": "allanon",  "page": 4,  "place": "duln-forests" },
-    { "who": "allanon",  "page": 14, "place": "shady-vale", "note": "tells Shea whose son he is" },
-
-    { "who": ["shea", "flick", "allanon"], "page": 30, "place": "shady-vale" },
-    { "who": ["shea", "flick"], "page": 44, "place": "shady-vale", "note": "the Skull Bearer comes" },
-    { "who": "allanon",  "page": 44, "place": null, "note": "gone ahead, and not seen for a while" },
-
-    { "who": ["shea", "flick"], "page": 60, "place": "leah", "note": "they run for Leah" },
-    { "who": "menion",  "page": 60, "place": "leah" },
-    { "who": ["shea", "flick", "menion"], "page": 78, "place": "leah" },
-    { "who": ["shea", "flick", "menion"], "page": 96, "place": "black-oaks", "note": "the Black Oaks, and the wolves" }
+    {
+      "who": [
+        "shea",
+        "flick"
+      ],
+      "ch": 1,
+      "place": "shady-vale",
+      "note": "the inn at Shady Vale"
+    },
+    {
+      "who": "flick",
+      "ch": 1,
+      "at": 0.3,
+      "place": "duln-forests",
+      "note": "a stranger on the Vale road"
+    },
+    {
+      "who": "allanon",
+      "ch": 1,
+      "at": 0.3,
+      "place": "duln-forests"
+    },
+    {
+      "who": "flick",
+      "ch": 1,
+      "at": 0.8,
+      "place": "shady-vale"
+    },
+    {
+      "who": "allanon",
+      "ch": 2,
+      "place": "shady-vale",
+      "note": "he tells Shea whose son he is"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "allanon"
+      ],
+      "ch": 3,
+      "place": "shady-vale"
+    },
+    {
+      "who": [
+        "shea",
+        "flick"
+      ],
+      "ch": 4,
+      "place": "shady-vale",
+      "note": "the Skull Bearer comes"
+    },
+    {
+      "who": "allanon",
+      "ch": 4,
+      "at": 0.6,
+      "place": null,
+      "note": "gone ahead, and not seen for a while"
+    },
+    {
+      "who": [
+        "shea",
+        "flick"
+      ],
+      "ch": 5,
+      "at": 0.4,
+      "place": "duln-forests"
+    },
+    {
+      "who": [
+        "shea",
+        "flick"
+      ],
+      "ch": 6,
+      "place": "leah",
+      "note": "they run for Leah"
+    },
+    {
+      "who": "menion",
+      "ch": 6,
+      "place": "leah"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion"
+      ],
+      "ch": 7,
+      "place": "leah"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion"
+      ],
+      "ch": 8,
+      "place": "black-oaks",
+      "note": "the Black Oaks, and the wolves"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion"
+      ],
+      "ch": 10,
+      "place": "mist-marsh",
+      "note": "the Mist Wraith takes Shea"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion"
+      ],
+      "ch": 11,
+      "at": 0.5,
+      "place": "rainbow-lake"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion"
+      ],
+      "ch": 12,
+      "place": "silver-river",
+      "note": "the King of the Silver River"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion"
+      ],
+      "ch": 13,
+      "place": "culhaven"
+    },
+    {
+      "who": "allanon",
+      "ch": 13,
+      "at": 0.5,
+      "place": "culhaven"
+    },
+    {
+      "who": "balinor",
+      "ch": 13,
+      "at": 0.5,
+      "place": "culhaven"
+    },
+    {
+      "who": "hendel",
+      "ch": 13,
+      "at": 0.5,
+      "place": "culhaven"
+    },
+    {
+      "who": "durin",
+      "ch": 13,
+      "at": 0.5,
+      "place": "culhaven"
+    },
+    {
+      "who": "dayel",
+      "ch": 13,
+      "at": 0.5,
+      "place": "culhaven"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 14,
+      "place": "culhaven",
+      "note": "the council of Culhaven"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 15,
+      "at": 0.5,
+      "place": "storlock"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 17,
+      "place": "wolfsktaag",
+      "note": "over the Wolfsktaag, and the thing that walks there"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 19,
+      "place": "rabb-plains"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 21,
+      "place": "dragons-teeth"
+    },
+    {
+      "who": [
+        "shea",
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 22,
+      "place": "hall-of-kings",
+      "note": "down into the Hall of Kings"
+    },
+    {
+      "who": "shea",
+      "ch": 23,
+      "at": 0.7,
+      "place": null,
+      "note": "the ledge gives way; he is gone"
+    },
+    {
+      "who": [
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 24,
+      "at": 0.4,
+      "place": "valley-of-shale"
+    },
+    {
+      "who": [
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 25,
+      "place": "paranor",
+      "note": "Paranor, and the chamber where the Sword should be"
+    },
+    {
+      "who": [
+        "flick",
+        "menion",
+        "allanon",
+        "balinor",
+        "hendel",
+        "durin",
+        "dayel"
+      ],
+      "ch": 27,
+      "place": "paranor",
+      "note": "a Skull Bearer in the keep; the company scatters"
+    },
+    {
+      "who": [
+        "shea",
+        "panamon",
+        "keltset"
+      ],
+      "ch": 28,
+      "place": "streleheim",
+      "note": "a thief and a Rock Troll find him"
+    },
+    {
+      "who": [
+        "shea",
+        "panamon",
+        "keltset"
+      ],
+      "ch": 31,
+      "at": 0.5,
+      "place": "kierlak-desert"
+    },
+    {
+      "who": "orl-fane",
+      "ch": 33,
+      "place": "kierlak-desert",
+      "note": "a Gnome carrying something he does not understand"
+    },
+    {
+      "who": [
+        "shea",
+        "panamon",
+        "keltset",
+        "orl-fane"
+      ],
+      "ch": 35,
+      "at": 0.4,
+      "place": "skull-kingdom"
+    },
+    {
+      "who": [
+        "shea",
+        "panamon",
+        "keltset"
+      ],
+      "ch": 40,
+      "place": "skull-kingdom",
+      "note": "Orl Fane has the Sword of Shannara"
+    },
+    {
+      "who": "orl-fane",
+      "ch": 41,
+      "place": null,
+      "note": "he will not give it up"
+    },
+    {
+      "who": [
+        "shea",
+        "panamon",
+        "keltset"
+      ],
+      "ch": 43,
+      "place": "skull-mountain"
+    },
+    {
+      "who": "keltset",
+      "ch": 45,
+      "place": null,
+      "note": "the Troll takes the Skull Bearers with him"
+    },
+    {
+      "who": "shea",
+      "ch": 47,
+      "place": "skull-mountain",
+      "note": "the Sword, and the truth the Warlock Lord cannot survive"
+    },
+    {
+      "who": [
+        "balinor",
+        "hendel"
+      ],
+      "ch": 29,
+      "place": "tyrsis",
+      "note": "Palance holds the city, and Stenmin holds Palance"
+    },
+    {
+      "who": "palance",
+      "ch": 29,
+      "at": 0.3,
+      "place": "tyrsis"
+    },
+    {
+      "who": "stenmin",
+      "ch": 29,
+      "at": 0.3,
+      "place": "tyrsis"
+    },
+    {
+      "who": "menion",
+      "ch": 30,
+      "place": "kern"
+    },
+    {
+      "who": "shirl",
+      "ch": 30,
+      "at": 0.5,
+      "place": "kern"
+    },
+    {
+      "who": [
+        "flick",
+        "allanon"
+      ],
+      "ch": 31,
+      "place": "kennon-pass"
+    },
+    {
+      "who": [
+        "menion",
+        "shirl"
+      ],
+      "ch": 33,
+      "place": "kern",
+      "note": "Kern is taken"
+    },
+    {
+      "who": [
+        "menion",
+        "shirl"
+      ],
+      "ch": 35,
+      "place": "tyrsis"
+    },
+    {
+      "who": [
+        "flick",
+        "allanon"
+      ],
+      "ch": 36,
+      "place": "tyrsis"
+    },
+    {
+      "who": "stenmin",
+      "ch": 38,
+      "place": null,
+      "note": "he runs for the tunnels"
+    },
+    {
+      "who": "palance",
+      "ch": 39,
+      "place": null
+    },
+    {
+      "who": "balinor",
+      "ch": 40,
+      "place": "tyrsis",
+      "note": "the siege of Tyrsis"
+    },
+    {
+      "who": "hendel",
+      "ch": 42,
+      "place": null,
+      "note": "he holds the gate"
+    },
+    {
+      "who": [
+        "durin",
+        "dayel"
+      ],
+      "ch": 30,
+      "at": 0.5,
+      "place": "streleheim"
+    },
+    {
+      "who": [
+        "durin",
+        "dayel"
+      ],
+      "ch": 32,
+      "place": "arborlon"
+    },
+    {
+      "who": "eventine",
+      "ch": 32,
+      "at": 0.5,
+      "place": "arborlon"
+    },
+    {
+      "who": [
+        "eventine",
+        "durin",
+        "dayel"
+      ],
+      "ch": 38,
+      "place": "jannisson-pass",
+      "note": "the Elves march"
+    },
+    {
+      "who": [
+        "eventine",
+        "durin",
+        "dayel"
+      ],
+      "ch": 44,
+      "place": "tyrsis"
+    },
+    {
+      "who": "allanon",
+      "ch": 50,
+      "at": 0.5,
+      "place": "skull-mountain"
+    },
+    {
+      "who": [
+        "shea",
+        "panamon"
+      ],
+      "ch": 52,
+      "at": 0.5,
+      "place": "streleheim"
+    },
+    {
+      "who": [
+        "shea",
+        "flick"
+      ],
+      "ch": 55,
+      "place": "tyrsis"
+    },
+    {
+      "who": [
+        "menion",
+        "shirl"
+      ],
+      "ch": 57,
+      "place": "leah"
+    },
+    {
+      "who": [
+        "shea",
+        "flick"
+      ],
+      "ch": 59,
+      "place": "shady-vale",
+      "note": "home"
+    }
   ]
 }
