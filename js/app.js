@@ -21,6 +21,17 @@ const BOOKS = [
   { file: 'data/demo-island.json', label: 'The Salt Road (demo)' },
 ];
 const SPEEDS = [0.25, 0.5, 1, 2, 4];
+
+// A book is measured in pages or in chapters, and the difference shows up in
+// every readout, every keyboard step and every threshold that was tuned when
+// one unit meant one page. `book.axis` decides; nothing else guesses.
+const onChapters = () => book?.axis === 'chapter';
+/** One arrow-key step: a page, or a tenth of a chapter. */
+const unitStep = () => (onChapters() ? 0.1 : 1);
+/** How a position reads to the reader. */
+const posLabel = (v) => (onChapters()
+  ? `Ch. ${Math.floor(v)} · ${Math.round((v - Math.floor(v)) * 100)}%`
+  : `p. ${Math.round(v)}`);
 const LOUD = new Set(['meet', 'appear', 'exit']);
 
 const view = new View($('world-svg'), $('chips'));
@@ -49,17 +60,21 @@ async function loadBook(raw, { imageBlob } = {}) {
   loudEvents = events.filter((e) => LOUD.has(e.kind));
 
   clock?.pause();
-  clock ??= new Clock({ min: book.pages[0], max: book.pages[1], onFrame: frame });
-  clock.setRange(book.pages[0], book.pages[1]);
+  clock ??= new Clock({ min: book.pages[0], max: book.pages[1], onFrame: frame, axis: book.axis });
+  clock.setRange(book.pages[0], book.pages[1], book.axis);
   clock.setLoudPages(loudEvents.map((e) => e.page));
-  clock.seek(pref(`page:${book.id}`, book.pages[0]));
+  // A position saved on one axis means nothing on the other: a stored 340 read
+  // as a chapter clamps to the end of the book, which for a read-along book is
+  // the worst possible thing to open on.
+  const saved = pref(`page:${book.id}`, null);
+  clock.seek(saved && saved.axis === book.axis && isFinite(saved.at) ? saved.at : book.pages[0]);
 
   showProblems(problems);
   buildRoster();
   buildChapters();
   buildLanes();
   buildGutter();
-  $('page-of').textContent = `/ ${book.pages[1]}`;
+  $('page-of').textContent = onChapters() ? '' : `/ ${book.pages[1]}`;
   $('rail').setAttribute('aria-valuemin', book.pages[0]);
   $('rail').setAttribute('aria-valuemax', book.pages[1]);
 
@@ -170,6 +185,10 @@ function buildRoster() {
     row.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
+      // The window handler maps Space to play/pause and only bails for form
+      // fields, so without this Space would both focus the character and
+      // start playback.
+      e.stopPropagation();
       pick(e);
     });
     frag.append(row);
@@ -180,8 +199,10 @@ function buildRoster() {
 
 function drawRoster(page, pins) {
   const chapter = chapterAt(book, page);
-  $('page-label').textContent = `p. ${Math.round(page)} / ${book.pages[1]}`;
-  $('page-now').textContent = Math.round(page);
+  $('page-label').textContent = onChapters()
+    ? posLabel(page)
+    : `p. ${Math.round(page)} / ${book.pages[1]}`;
+  $('page-now').textContent = onChapters() ? posLabel(page) : Math.round(page);
   $('chapter-label').textContent = chapter
     ? `Ch. ${chapter.n}${chapter.title ? ` \u00b7 ${chapter.title}` : ''}` : '';
 
@@ -227,19 +248,31 @@ function buildChapters() {
   const span = book.pages[1] - book.pages[0];
   book.chapters.forEach((c, i) => {
     const next = book.chapters[i + 1];
-    const w = ((next ? next.startPage : book.pages[1]) - c.startPage) / span;
+    const w = ((next ? next.start : book.pages[1]) - c.start) / span;
     const d = document.createElement('div');
     d.className = 'chap';
     d.style.flexBasis = `${w * 100}%`;
     d.dataset.n = c.n;
-    d.title = c.title ? `Ch. ${c.n} · ${c.title} (p.${c.startPage})` : `Ch. ${c.n} (p.${c.startPage})`;
+    const at = c.startPage === null ? '' : ` (p.${c.startPage})`;
+    d.title = c.title ? `Ch. ${c.n} · ${c.title}${at}` : `Ch. ${c.n}${at}`;
+    // Chapter cells were click-only. The window keydown handler maps Space to
+    // play/pause, so activating one has to stop the event travelling.
+    d.tabIndex = 0;
+    d.setAttribute('role', 'button');
+    d.setAttribute('aria-label', c.title ? `Chapter ${c.n}, ${c.title}` : `Chapter ${c.n}`);
+    d.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      e.stopPropagation();
+      clock.jumpTo(c.start);
+    });
     const num = document.createElement('span');
     num.textContent = c.n;
     const t = document.createElement('span');
     t.className = 't';
     t.textContent = c.title;
     d.append(num, t);
-    d.addEventListener('click', () => clock.jumpTo(c.startPage));
+    d.addEventListener('click', () => clock.jumpTo(c.start));
     host.append(d);
   });
 }
@@ -379,8 +412,8 @@ function drawRail(page) {
     if (on) {
       const i = book.chapters.findIndex((c) => c.n === ch.n);
       const next = book.chapters[i + 1];
-      const end = next ? next.startPage : book.pages[1];
-      d.style.setProperty('--pct', `${((page - ch.startPage) / (end - ch.startPage)) * 100}%`);
+      const end = next ? next.start : book.pages[1];
+      d.style.setProperty('--pct', `${((page - ch.start) / (end - ch.start)) * 100}%`);
     }
   }
 }
@@ -395,7 +428,10 @@ function drawRail(page) {
  */
 function announce(page, prev) {
   if (page <= prev) { firedThisPass.clear(); return; }
-  const jumped = page - prev > 8;
+  // Far enough that the reader scrubbed rather than read. Eight pages, or
+  // a third of a chapter — without the unit this never fired on the chapter
+  // axis and every scrub machine-gunned announcements for all it flew past.
+  const jumped = page - prev > (onChapters() ? 0.33 : 8);
   for (const e of events) {
     if (e.page <= prev || e.page > page) continue;
     pulseTick(e);
@@ -430,6 +466,7 @@ function drainAnnounce() {
     // chip that says it as it happens.
     const last = (view.lastPins || []).find((p) => p.who === e.who[0]) ?? lastKnown(e.who[0]);
     if (last && loud) view.chip(last.x, last.y, `${shortOf(e.who[0])} leaves`, colors, 1200);
+    say(`${nameOf(e.who[0])} leaves the map`);
     return;
   }
 
@@ -442,6 +479,18 @@ function drainAnnounce() {
     ? `${listOf(e.who)} at ${place.name}`
     : `${shortOf(e.who[0])} — ${place.name}`;
   view.chip(place.x, place.y, text, colors, clamp(1400 / clock.speed, 500, 1400));
+  say(e.kind === 'meet'
+    ? `${listOf(e.who.map(nameOf))} meet at ${place.name}`
+    : `${nameOf(e.who[0])} reaches ${place.name}`);
+}
+
+/**
+ * The same sentence the chip shows, for a screen reader. The chips are drawn
+ * over the map and the readout rebuilds constantly, so neither can carry this.
+ */
+function say(text) {
+  const n = $('announcer');
+  if (n) n.textContent = text;
 }
 
 const charOf = (id) => book.characters.find((c) => c.id === id);
@@ -449,7 +498,7 @@ const nameOf = (id) => charOf(id)?.name ?? id;
 const shortOf = (id) => charOf(id)?.short ?? id;
 
 function listOf(ids) {
-  const names = ids.map(shortOf);
+  const names = ids.map((x) => (charOf(x) ? shortOf(x) : x));
   if (names.length > 3) return `${names.slice(0, 2).join(', ')} and ${names.length - 2} others`;
   if (names.length === 1) return names[0];
   return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
@@ -659,7 +708,8 @@ addEventListener('keydown', (e) => {
   // .matches — guard rather than assume an element.
   if (e.target?.matches?.('input, select, textarea')) return;
   if (!book || !clock) return;              // a book that failed to load
-  const step = e.shiftKey ? 10 : 1;
+  // Ten steps on shift. A step is a page, or a tenth of a chapter.
+  const step = (e.shiftKey ? 10 : 1) * unitStep();
   const mode = e.repeat ? 'keyRepeat' : 'key';
   const K = {
     ' ': () => clock.toggle(),
@@ -703,11 +753,11 @@ addEventListener('keydown', (e) => {
 });
 
 function hopChapter(dir) {
-  const starts = book.chapters.map((c) => c.startPage);
+  const starts = book.chapters.map((c) => c.start);
   const here = clock.shown;
   const next = dir > 0
-    ? starts.find((p) => p > here + 0.5)
-    : [...starts].reverse().find((p) => p < here - 0.5);
+    ? starts.find((p) => p > here + unitStep() / 2)
+    : [...starts].reverse().find((p) => p < here - unitStep() / 2);
   clock.jumpTo(next ?? (dir > 0 ? book.pages[1] : book.pages[0]));
 }
 
@@ -715,8 +765,8 @@ function hopEvent(dir) {
   const pages = [...new Set(loudEvents.map((e) => e.page))].sort((a, b) => a - b);
   const here = clock.shown;
   const next = dir > 0
-    ? pages.find((p) => p > here + 0.5)
-    : [...pages].reverse().find((p) => p < here - 0.5);
+    ? pages.find((p) => p > here + unitStep() / 2)
+    : [...pages].reverse().find((p) => p < here - unitStep() / 2);
   if (next !== undefined) clock.jumpTo(next);
 }
 
@@ -727,8 +777,8 @@ function hopWaypoint(dir) {
     : [...new Set(book.waypoints.map((w) => w.page))].sort((a, b) => a - b);
   const here = clock.shown;
   const next = dir > 0
-    ? pages.find((p) => p > here + 0.5)
-    : [...pages].reverse().find((p) => p < here - 0.5);
+    ? pages.find((p) => p > here + unitStep() / 2)
+    : [...pages].reverse().find((p) => p < here - unitStep() / 2);
   if (next !== undefined) clock.jumpTo(next);
 }
 
@@ -815,5 +865,5 @@ $('play').addEventListener('click', () => {
 setInterval(() => {
   if (!clock) return;
   $('play').textContent = clock.playing ? '❚❚ Pause' : '▶︎ Play';
-  if (book) setPref(`page:${book.id}`, Math.round(clock.shown));
+  if (book) setPref(`page:${book.id}`, { axis: book.axis, at: +clock.shown.toFixed(2) });
 }, 400);

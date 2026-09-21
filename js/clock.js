@@ -10,8 +10,18 @@
 
 const HALF_LIFE = { drag: 25, key: 45, keyRepeat: 28, play: 30, idle: 45 };
 
+// How the clock's feel constants scale, per axis. A page is a small step and a
+// chapter is a large one, so every threshold tuned for a 726-page novel is
+// wrong by two orders of magnitude on a 60-chapter one: the playback-speed
+// clamp alone would run a whole book in thirty seconds and hold it permanently
+// inside a ritard window.
+const UNITS = {
+  page:    { pps: [2, 8],     ritard: [4, 20],    snap: 1,   glide: 1 },
+  chapter: { pps: [0.2, 1.5], ritard: [0.3, 1.5], snap: 0.1, glide: 0.1 },
+};
+
 export class Clock {
-  constructor({ min, max, onFrame }) {
+  constructor({ min, max, onFrame, axis = 'page' }) {
     this.min = min;
     this.max = max;
     this.onFrame = onFrame;
@@ -22,24 +32,52 @@ export class Clock {
     this.playing = false;
     this.speed = 1;
     this.jump = null;
+    this.ceiling = null;
     this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.ritardAt = [];
     // Book-relative, so a 96-page fixture and a 726-page novel both play in
     // roughly two and a half minutes.
-    this.basePps = clamp((max - min) / 150, 2, 8);
-    this.ritardAt = [];
-    this.ritardWidth = clamp(0.016 * (max - min), 4, 20);
+    this._setUnits(axis, min, max);
     this.slowNearEvents = true;
     this._last = performance.now();
     this._tick = this._tick.bind(this);
     requestAnimationFrame(this._tick);
   }
 
-  setRange(min, max) {
+  _setUnits(axis, min, max) {
+    const u = UNITS[axis] || UNITS.page;
+    this.axis = axis;
+    this.basePps = clamp((max - min) / 150, u.pps[0], u.pps[1]);
+    this.ritardWidth = clamp(0.016 * (max - min), u.ritard[0], u.ritard[1]);
+    this.snapStep = u.snap;
+    this.glideThreshold = u.glide;
+  }
+
+  setRange(min, max, axis = this.axis) {
     this.min = min;
     this.max = max;
-    this.basePps = clamp((max - min) / 150, 2, 8);
-    this.ritardWidth = clamp(0.016 * (max - min), 4, 20);
+    this._setUnits(axis, min, max);
+    // An in-flight jump still holds a destination in the old range and would
+    // keep driving `shown` there for the rest of its duration.
+    this.jump = null;
     this.target = this.shown = this.prev = min;
+  }
+
+  /**
+   * The furthest position the reader has unlocked. Read-along sets this so the
+   * clock cannot run past what they have read; it leaves `shown` alone, which
+   * is why it is not just `setRange(min, ceiling)`.
+   */
+  setCeiling(v) {
+    this.ceiling = Number.isFinite(v) ? v : null;
+    if (this.target > this.top()) this.seek(this.top());
+  }
+
+  /** The effective upper bound: the book's end, or the reading wall. */
+  top() {
+    return this.ceiling === null || this.ceiling === undefined
+      ? this.max
+      : Math.min(this.max, this.ceiling);
   }
 
   /** Sorted pages of the events playback should linger on. */
@@ -50,16 +88,16 @@ export class Clock {
   /** Chase a page with the feel appropriate to how the user asked for it. */
   seek(page, mode = 'idle') {
     this.jump = null;
-    this.target = clamp(page, this.min, this.max);
+    this.target = clamp(page, this.min, this.top());
     this.mode = mode;
     if (this.reduced) this.shown = this.target;
   }
 
   /** A deliberate leap: chapter click, event hop, Home/End. */
   jumpTo(page) {
-    const to = clamp(page, this.min, this.max);
+    const to = clamp(page, this.min, this.top());
     const d = Math.abs(to - this.shown);
-    if (this.reduced || d < 1) { this.seek(to); this.shown = to; return; }
+    if (this.reduced || d < this.glideThreshold) { this.seek(to); this.shown = to; return; }
     this.jump = {
       from: this.shown,
       to,
@@ -70,7 +108,7 @@ export class Clock {
   }
 
   play() {
-    if (this.shown >= this.max - 0.01) this.seek(this.min);
+    if (this.shown >= this.top() - 0.01) this.seek(this.min);
     this.playing = true;
     this.mode = 'play';
   }
@@ -91,9 +129,14 @@ export class Clock {
   settle({ snapToEvents = true } = {}) {
     const span = this.max - this.min;
     const nearest = this._nearestLoud(this.target);
-    this.target = snapToEvents && nearest !== null && Math.abs(nearest - this.target) <= 0.008 * span
+    const snapped = snapToEvents && nearest !== null && Math.abs(nearest - this.target) <= 0.008 * span
       ? nearest
-      : Math.round(this.target);
+      // A whole page on the page axis, a tenth of a chapter on the chapter
+      // axis — rounding to whole chapters would make 12.4 unreachable by drag.
+      : Math.round(this.target / this.snapStep) * this.snapStep;
+    // This has never been clamped, not even to the book. A loud page past the
+    // reading wall would otherwise snap the thumb onto an unread event.
+    this.target = clamp(snapped, this.min, this.top());
     this.mode = 'idle';
   }
 
@@ -132,8 +175,8 @@ export class Clock {
 
     if (this.playing) {
       const rate = (this.basePps * this.speed) / 1000;
-      this.target = clamp(this.target + rate * this._ritard(this.shown) * dt, this.min, this.max);
-      if (this.target >= this.max) this.pause();
+      this.target = clamp(this.target + rate * this._ritard(this.shown) * dt, this.min, this.top());
+      if (this.target >= this.top()) this.pause();
     }
 
     if (this.jump) {

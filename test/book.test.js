@@ -248,3 +248,156 @@ test('chapterAt finds the containing chapter', () => {
   assert.equal(chapterAt(book, 44).n, 2);
   assert.equal(chapterAt(book, 96).n, 4);
 });
+
+// --- the chapter axis ------------------------------------------------------
+//
+// Page numbers are edition-specific. A reader knows they are in chapter 12,
+// not on page 138 of someone else's printing. A book may therefore author
+// waypoints as `ch` + `at` and omit startPage entirely, and the unit becomes a
+// property of the book rather than of the app.
+
+const chapterBook = (over = {}) => parseBook({
+  title: 'Elfstones',
+  map: { aspect: 1 },
+  places: { arborlon: { name: 'Arborlon', x: 0.3, y: 0.35 }, rhenn: { name: 'Rhenn', x: 0.34, y: 0.38 } },
+  characters: [{ id: 'wil', name: 'Wil Ohmsford' }, { id: 'amberle', name: 'Amberle' }],
+  chapters: [{ n: 1, title: 'One' }, { n: 2, title: 'Two' }, { n: 3, title: 'Three' }],
+  waypoints: [
+    { who: ['wil', 'amberle'], ch: 1, place: 'arborlon' },
+    { who: 'wil', ch: 2, at: 0.5, place: 'rhenn' },
+  ],
+  ...over,
+});
+
+test('a book whose chapters have no startPage still parses', () => {
+  const { book, problems } = chapterBook();
+  assert.deepEqual(problems, [], problems.join('; '));
+  assert.equal(book.chapters.length, 3);
+  assert.equal(book.axis, 'chapter');
+});
+
+test('on the chapter axis a chapter starts at its own number', () => {
+  const { book } = chapterBook();
+  assert.deepEqual(book.chapters.map((c) => c.start), [1, 2, 3]);
+  assert.deepEqual(book.pages, [1, 4]);        // chapter 3 runs up to 4
+});
+
+test('ch + at resolves to a position inside that chapter', () => {
+  const { book } = chapterBook();
+  const wil = book.byCharacter.wil;
+  assert.equal(wil[0].page, 1);                // ch 1, at defaults to 0
+  assert.equal(wil[1].page, 2.5);              // ch 2, half way
+});
+
+test('a startPage on every chapter keeps the page axis', () => {
+  const { book, problems } = parseBook({
+    title: 'Sword', map: { aspect: 1 }, pages: [1, 726],
+    places: { a: { name: 'A', x: 0.5, y: 0.5 } },
+    characters: [{ id: 'shea', name: 'Shea' }],
+    chapters: [{ n: 1, startPage: 1 }, { n: 2, startPage: 14 }],
+    waypoints: [{ who: 'shea', page: 1, place: 'a' }],
+  });
+  assert.deepEqual(problems, []);
+  assert.equal(book.axis, 'page');
+  assert.deepEqual(book.chapters.map((c) => c.start), [1, 14]);
+});
+
+test('ch + at interpolates within a chapter on the page axis', () => {
+  const { book } = parseBook({
+    title: 'Sword', map: { aspect: 1 }, pages: [1, 100],
+    places: { a: { name: 'A', x: 0.5, y: 0.5 } },
+    characters: [{ id: 'shea', name: 'Shea' }],
+    chapters: [{ n: 1, startPage: 1 }, { n: 2, startPage: 21 }, { n: 3, startPage: 41 }],
+    waypoints: [{ who: 'shea', ch: 2, at: 0.5, place: 'a' }],
+  });
+  assert.equal(book.byCharacter.shea[0].page, 31);   // half way through 21..41
+});
+
+test('chapters with some startPage and some not are reported', () => {
+  const { book, problems } = chapterBook({
+    chapters: [{ n: 1, startPage: 1 }, { n: 2 }, { n: 3 }],
+  });
+  assert.equal(book.axis, 'chapter');
+  assert.ok(problems.some((p) => /startPage/.test(p)), problems.join('; '));
+});
+
+test('a waypoint naming a chapter that does not exist is reported, not drawn', () => {
+  const { book, problems } = chapterBook({
+    waypoints: [
+      { who: 'wil', ch: 1, place: 'arborlon' },
+      { who: 'wil', ch: 99, place: 'rhenn' },
+    ],
+  });
+  assert.ok(problems.some((p) => /99/.test(p)), problems.join('; '));
+  assert.equal(book.byCharacter.wil.length, 1);
+});
+
+test('chapterAt reads the resolved start, whichever axis', () => {
+  const { book } = chapterBook();
+  assert.equal(chapterAt(book, 1).n, 1);
+  assert.equal(chapterAt(book, 2.5).n, 2);
+  assert.equal(chapterAt(book, 3.9).n, 3);
+});
+
+// --- validation hardening (§11) -------------------------------------------
+
+test('a prototype key is not a place', () => {
+  const { book, problems } = parseBook({
+    title: 't', map: { aspect: 1 }, pages: [1, 100],
+    places: { real: { name: 'Real', x: 0.5, y: 0.5 } },
+    characters: [{ id: 'a', name: 'A' }],
+    chapters: [{ n: 1, startPage: 1 }],
+    waypoints: [{ who: 'a', page: 1, place: 'real' }, { who: 'a', page: 50, place: 'constructor' }],
+  });
+  assert.ok(problems.some((p) => /constructor/.test(p)), problems.join('; '));
+  assert.equal(book.byCharacter.a.length, 1);
+});
+
+test('a __proto__ character keeps its waypoints', () => {
+  const { book } = parseBook({
+    title: 't', map: { aspect: 1 }, pages: [1, 100],
+    places: { a: { name: 'A', x: 0.5, y: 0.5 } },
+    characters: [{ id: '__proto__', name: 'Odd' }],
+    chapters: [{ n: 1, startPage: 1 }],
+    waypoints: [{ who: '__proto__', page: 1, place: 'a' }],
+  });
+  assert.equal(book.byCharacter['__proto__'].length, 1);
+  assert.equal(book.waypoints.length, 1);
+});
+
+test('a non-finite aspect is reported, not propagated', () => {
+  const { book, problems } = parseBook({
+    title: 't', map: { aspect: 1e400 }, pages: [1, 100],
+    places: { a: { name: 'A', x: 0.5, y: 0.4 } },
+    characters: [{ id: 'a', name: 'A' }],
+    chapters: [{ n: 1, startPage: 1 }],
+    waypoints: [{ who: 'a', page: 1, place: 'a' }],
+  });
+  assert.ok(problems.some((p) => /aspect/.test(p)), problems.join('; '));
+  assert.ok(Number.isFinite(book.places.a.y), `y was ${book.places.a.y}`);
+});
+
+test('implicit chapter numbers follow reading order, not array order', () => {
+  const { book } = parseBook({
+    title: 't', map: { aspect: 1 }, pages: [1, 100],
+    places: { a: { name: 'A', x: 0.5, y: 0.5 } },
+    characters: [{ id: 'a', name: 'A' }],
+    chapters: [{ startPage: 45 }, { startPage: 1 }, { startPage: 20 }],
+    waypoints: [{ who: 'a', page: 1, place: 'a' }],
+  });
+  assert.deepEqual(book.chapters.map((c) => [c.n, c.start]), [[1, 1], [2, 20], [3, 45]]);
+});
+
+test('a route bend outside the map is reported and the route is not trusted', () => {
+  const { book, problems } = parseBook({
+    title: 't', map: { aspect: 1 }, pages: [1, 100],
+    places: { a: { name: 'A', x: 0.2, y: 0.2 }, b: { name: 'B', x: 0.8, y: 0.8 } },
+    routes: [{ from: 'a', to: 'b', via: [[3.3, 0.36]] }],
+    characters: [{ id: 'x', name: 'X' }],
+    chapters: [{ n: 1, startPage: 1 }],
+    waypoints: [{ who: 'x', page: 1, place: 'a' }, { who: 'x', page: 50, place: 'b' }],
+  });
+  assert.ok(problems.some((p) => /bend/.test(p)), problems.join('; '));
+  const line = polylineFor(book, 'a', 'b', 'x');
+  assert.equal(line.inferred, true, 'a route with a bad bend must not be drawn as authored');
+});
