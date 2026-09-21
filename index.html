@@ -44,30 +44,38 @@
 
 <footer id="bar">
   <div id="chapters"></div>
-  <svg id="lanes" aria-hidden="true"></svg>
+  <div id="lanes-wrap"><svg id="lanes" aria-hidden="true"></svg></div>
 
   <div id="rail" role="slider" tabindex="0" aria-label="Page"
        aria-valuemin="1" aria-valuemax="2" aria-valuenow="1">
     <div class="fill"></div>
     <svg class="ticks" aria-hidden="true"></svg>
-    <!-- How far the reader has read. Everything to its right is withheld. -->
+    <!-- Everything past where the reader has read, hatched out. -->
     <div class="beyond" hidden></div>
-    <div class="wall" id="wall" role="slider" tabindex="0"
-         aria-label="How far you have read" hidden></div>
     <div class="thumb"></div>
   </div>
   <svg id="gutter" aria-hidden="true"></svg>
 
   <div id="transport">
+    <!-- For a book you are part-way through this is the main control, so it
+         comes first and is the only thing in the bar that is not a small grey
+         button. -->
+    <div id="reading">
+      <button class="btn start" id="read-start">Reading this now…</button>
+      <span class="live" id="read-live" hidden>
+        <span class="lbl">Read to</span>
+        <button class="btn step" id="read-prev" title="Back one chapter" aria-label="Back one chapter">−</button>
+        <span class="n" id="read-n">ch. 1</span>
+        <span class="of" id="read-of">of 60</span>
+        <button class="btn next" id="read-next">Finished this chapter →</button>
+        <button class="btn ghost" id="read-off" title="Show the whole book">show all</button>
+      </span>
+    </div>
+    <span class="bar-sep"></span>
     <button class="btn" id="play" title="Space">▶︎ Play</button>
     <button class="btn" id="speed" title="&lt; and &gt;">1×</button>
     <span class="page"><span id="page-now">—</span> <span id="page-of"></span></span>
     <span class="spacer"></span>
-    <button class="btn" id="readto-all" title="Hide everything past the chapter you have read">Spoiler-free</button>
-    <span class="readto" id="readto-wrap" hidden>
-      <span id="readto-label">Read to ch. 0</span>
-      <button class="btn ghost" id="readto-off" title="Show the whole book">✕</button>
-    </span>
     <select class="btn" id="book-pick" title="Which book"></select>
     <button class="btn" id="scrim-btn" title="M — darken the map">Scrim</button>
     <button class="btn" id="fit-btn" title="R — fit the map">Fit</button>

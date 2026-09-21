@@ -194,17 +194,38 @@ function applyCeiling() {
     walled() ? new Set(book.characters.filter((c) => shown(c.id)).map((c) => c.id)) : null,
   );
   document.body.classList.toggle('walled', walled());
-  $('readto-wrap').hidden = !walled();
-  $('readto-all').hidden = walled();
-  $('readto-label').textContent = `Read to ch. ${readTo}`;
-  const wall = $('wall');
-  wall.hidden = !walled();
-  wall.setAttribute('aria-valuemin', 0);
-  wall.setAttribute('aria-valuemax', book.chapters.at(-1)?.n ?? 1);
-  wall.setAttribute('aria-valuenow', walled() ? readTo : 0);
-  wall.setAttribute('aria-valuetext', walled() ? `read to chapter ${readTo}` : 'whole book shown');
+  const last = book.chapters.at(-1)?.n ?? 1;
+  $('read-start').hidden = walled();
+  $('read-live').hidden = !walled();
+  $('read-n').textContent = readTo === 0 ? 'nothing yet' : `ch. ${readTo}`;
+  $('read-of').textContent = `of ${last}`;
+  $('read-prev').disabled = (readTo ?? 0) <= 0;
+  $('read-next').disabled = (readTo ?? 0) >= last;
+  $('read-next').textContent = readTo === 0 ? 'Start chapter 1 →' : 'Finished this chapter →';
+  blankNote();
   if (clock.shown > top) clock.jumpTo(top);
   view.noteAction(visitedBox(book, readEnd()));
+}
+
+/**
+ * A walled book with nothing revealed is a correct but baffling sight: a map
+ * and no story. Say why, rather than letting it look broken.
+ */
+function blankNote() {
+  const vp = $('viewport');
+  let note = $('blank-note');
+  const empty = walled() && !book.waypoints.some((w) => w.place && w.page <= readEnd());
+  if (!empty) { note?.remove(); return; }
+  if (!note) {
+    note = document.createElement('div');
+    note.id = 'blank-note';
+    vp.append(note);
+  }
+  note.innerHTML = readTo === 0
+    ? '<b>Nothing has happened yet.</b><br>Read the first chapter, then press '
+      + '<b>Start chapter 1</b> below and watch it appear on the map.'
+    : '<b>Nobody is placed this early.</b><br>Keep pressing '
+      + '<b>Finished this chapter</b> as you read.';
 }
 
 /** Place ids anyone has reached by `upTo`. */
@@ -220,6 +241,11 @@ function setReadTo(v) {
     ? null
     : Math.min(Math.max(Math.round(n), 0), book.chapters.at(-1)?.n ?? 1);
   setPref(`readTo:${book.id}`, readTo);
+  // The box normally only grows, so that a story contracting onto one town
+  // does not pull the camera in after it. Moving the wall is different: the
+  // reader has changed how much of the book exists, so the remembered region
+  // is stale and the camera should reframe on what is left.
+  view.resetAction();
   applyCeiling();
   view.frameAction();
 }
@@ -377,6 +403,8 @@ function buildChapters() {
     t.textContent = c.title;
     d.append(num, t);
     if (walled() && c.start >= ceiling()) {
+      // The first cell past the boundary carries the accent edge.
+      if (!host.querySelector('.chap.locked')) d.classList.add('edge');
       // Past the wall. The number stays — how much book is left is not a
       // spoiler and is useful — but the title and the jump do not.
       d.classList.add('locked');
@@ -524,19 +552,16 @@ function drawRail(page) {
   // The stretch you have not read, hatched and dead, with the handle that
   // sets it sitting on the boundary.
   const beyond = $('rail').querySelector('.beyond');
-  const wall = $('wall');
-  if (walled()) {
-    const stop = clamp(((ceiling() - book.pages[0]) / span) * 100, 0, 100);
-    beyond.style.left = `${stop}%`;
-    beyond.hidden = stop >= 100;
-    wall.style.left = `${stop}%`;
-    wall.hidden = false;
-    const tip = $('rail').querySelector('.wall-hint');
-    if (tip) tip.style.left = `${stop}%`;
-  } else {
-    beyond.hidden = true;
-    wall.hidden = true;
-    $('rail').querySelector('.wall-hint')?.remove();   // no handle, no pointer at it
+  const stop = walled() ? clamp(((ceiling() - book.pages[0]) / span) * 100, 0, 100) : 100;
+  beyond.hidden = !walled() || stop >= 100;
+  if (!beyond.hidden) beyond.style.left = `${stop}%`;
+  // One continuous line through the lane strip too, so the boundary reads as
+  // a single edge across the whole bar rather than three unrelated treatments.
+  const wrap = $('lanes-wrap');
+  let edge = wrap.querySelector('.read-edge');
+  if (beyond.hidden) { edge?.remove(); } else {
+    if (!edge) { edge = document.createElement('div'); edge.className = 'read-edge'; wrap.append(edge); }
+    edge.style.left = `${stop}%`;
   }
 
   const head = $('lane-head');
@@ -820,86 +845,33 @@ function hidePopover() {
 $('play').addEventListener('click', () => clock.toggle());
 $('speed').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(clock.speed) + 1) % SPEEDS.length]));
 $('fit-btn').addEventListener('click', () => view.toggleFrame());
-/**
- * The wall handle. It rides the same rail as the playhead but means something
- * different — how far you have read, not where you are looking — so it snaps
- * to whole chapters and is drawn hollow rather than solid.
- */
-const wallEl = $('wall');
-let wallDrag = false;
+// --- reading along ---------------------------------------------------------
+//
+// One number, one button. The reader says which chapter they have finished and
+// the app shows the story up to there. An earlier version put a second
+// draggable handle on the rail — how far you have read, alongside where you
+// are looking — and asking anyone to hold two positions at once turned out to
+// be the whole problem, however the handles were labelled.
 
-/** The chapter whose end is nearest this x, so the handle lands on a boundary. */
-function wallChapterAt(clientX) {
-  const b = rail.getBoundingClientRect();
-  const f = clamp((clientX - b.left) / b.width, 0, 1);
-  const pos = book.pages[0] + f * (book.pages[1] - book.pages[0]);
-  let best = 0;
-  let bestD = Math.abs(book.pages[0] - pos);          // chapter 0: nothing read
-  for (const c of book.chapters) {
-    const i = book.chapters.indexOf(c);
-    const end = book.chapters[i + 1] ? book.chapters[i + 1].start : book.pages[1];
-    const d = Math.abs(end - pos);
-    if (d < bestD) { bestD = d; best = c.n; }
-  }
-  return best;
-}
-
-wallEl.addEventListener('pointerdown', (e) => {
-  e.stopPropagation();                      // not a scrub
-  rail.querySelector('.wall-hint')?.remove();
-  wallDrag = true;
-  rail.classList.add('wall-dragging');
-  wallEl.setPointerCapture(e.pointerId);
-});
-addEventListener('pointermove', (e) => {
-  if (!wallDrag) return;
-  setReadTo(wallChapterAt(e.clientX));
-});
-addEventListener('pointerup', () => {
-  if (!wallDrag) return;
-  wallDrag = false;
-  rail.classList.remove('wall-dragging');
-});
-wallEl.addEventListener('keydown', (e) => {
-  const step = { ArrowLeft: -1, ArrowRight: 1, PageDown: -5, PageUp: 5 }[e.key];
-  const last = book.chapters.at(-1)?.n ?? 1;
-  if (step === undefined && e.key !== 'Home' && e.key !== 'End') return;
-  e.preventDefault();
-  e.stopPropagation();                      // the window handler owns these too
-  if (e.key === 'Home') return setReadTo(0);
-  if (e.key === 'End') return setReadTo(last);
-  setReadTo(Math.min(Math.max((readTo ?? 0) + step, 0), last));
-});
-
-// Clicking the empty rail while walled sets the wall, not the playhead, only
-// if you grabbed the handle — otherwise the rail keeps its old job.
-/**
- * Turning the wall on mid-session starts it at the chapter you are looking at,
- * not at zero. Dropping straight to zero blanks the map, the roster and the
- * rail in one go, which reads as the app breaking rather than a filter turning
- * on. A book that asks for `readAlong` still opens at zero — that is a fresh
- * read, and there the empty map is the truth.
- */
-$('readto-all').addEventListener('click', () => {
+$('read-start').addEventListener('click', () => {
+  // Start where they are looking, not at zero: dropping the whole map, roster
+  // and rail at once reads as the app breaking rather than a filter arriving.
   const here = chapterAt(book, clock.shown);
-  setReadTo(here ? here.n : 0);
-  showWallHint();
+  setReadTo(here ? here.n : 1);
 });
-$('readto-off').addEventListener('click', () => setReadTo(''));
-
-/** Point at the handle the first time the wall goes up for this book. */
-let hintTimer = null;
-function showWallHint() {
-  const old = rail.querySelector('.wall-hint');
-  if (old) old.remove();
-  clearTimeout(hintTimer);
-  const tip = document.createElement('div');
-  tip.className = 'wall-hint';
-  tip.textContent = 'drag me to where you have read';
-  tip.style.left = $('wall').style.left || '0%';
-  rail.append(tip);
-  hintTimer = setTimeout(() => tip.remove(), 4000);
-}
+$('read-off').addEventListener('click', () => setReadTo(''));
+$('read-prev').addEventListener('click', () => setReadTo(Math.max((readTo ?? 1) - 1, 0)));
+$('read-next').addEventListener('click', () => {
+  const last = book.chapters.at(-1)?.n ?? 1;
+  if ((readTo ?? 0) >= last) return;
+  const to = (readTo ?? 0) + 1;
+  setReadTo(to);
+  // The playhead was already parked at the old ceiling, which is the start of
+  // the chapter just revealed — so gliding to the new ceiling walks through
+  // it, which is the point of pressing this. Stop a hair short of the
+  // boundary so the readout says "ch. 12, 100%" rather than "ch. 13, 0%".
+  clock.jumpTo(ceiling() - 1e-3);
+});
 
 $('scrim-btn').addEventListener('click', cycleScrim);
 $('help-btn').addEventListener('click', () => { $('help').hidden = !$('help').hidden; });

@@ -306,26 +306,47 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 #transport .spacer { flex: 1; }
 
-/* Reading progress: the last chapter you finished. Everything past it is
-   withheld, so a finished dataset cannot spoil a book you are part-way
-   through. */
-.readto { display: flex; align-items: center; gap: 6px; color: var(--text); }
-.readto {
-  border: 1px solid var(--accent); border-radius: 6px; padding: 0 0 0 10px;
-  background: color-mix(in srgb, var(--accent) 18%, var(--bg-4));
+/* Everything past where the reader has read. This has to be unmistakable at a
+   glance — a subtle hatch reads as texture, not as "the app is withholding
+   this", and then the whole feature looks broken rather than deliberate. */
+#rail .beyond {
+  position: absolute; right: 0; height: 8px; border-radius: 0 4px 4px 0;
+  background: var(--bg);
+  border-left: 2px solid var(--accent);
+  box-shadow: inset 0 0 0 1px var(--line);
+  pointer-events: none;
 }
-.readto #readto-label { font-variant-numeric: tabular-nums; font-weight: 600; }
-.readto .ghost { padding: 7px 9px; color: var(--dim); border: 0; }
-.readto .ghost:hover { color: var(--text); }
+.chap.locked {
+  color: var(--mute); background: var(--bg); cursor: default; opacity: 0.5;
+}
+.chap.locked .t { display: none; }
+/* The first unread chapter carries the edge, so the boundary is one continuous
+   line down through the chapter strip, the lane strip and the rail. */
+.chap.locked.edge { box-shadow: inset 2px 0 0 var(--accent); opacity: 0.75; }
 
-/* The handle is small and lives on a busy rail, so the first time the wall
-   goes up it says where to look. Fades once the reader has dragged it. */
-#rail .wall-hint {
-  position: absolute; bottom: 26px; transform: translateX(-50%);
-  background: var(--bg-3); border: 1px solid var(--accent); border-radius: 6px;
-  padding: 4px 8px; font-size: 11px; white-space: nowrap; color: var(--text);
-  pointer-events: none; z-index: 4; animation: chip-in 160ms var(--e-out);
+#lanes { position: relative; }
+#bar .read-edge {
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  background: var(--accent); opacity: 0.55; pointer-events: none;
 }
+#lanes-wrap { position: relative; }
+
+#transport {
+  display: flex; align-items: center; gap: 10px; margin-top: 6px;
+  font-size: 13px; color: var(--text);
+}
+#transport .btn {
+  background: var(--bg-4); border: 1px solid var(--line-2); border-radius: 6px;
+  padding: 7px 11px; color: var(--text);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+#transport .btn:hover { background: #2A3240; border-color: #7D8CA1; }
+#transport .btn.on {
+  background: color-mix(in srgb, var(--accent) 26%, var(--bg-4));
+  border-color: var(--accent); color: #F1FAFF; font-weight: 600;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+#transport .spacer { flex: 1; }
 
 /* The stretch of rail you have not read yet, and the handle that sets it.
    A hollow handle for the wall, a solid one for where you are looking: the
@@ -416,6 +437,16 @@ body.dragging-file #drop-hint { opacity: 1; }
 #help h2:first-child { margin-top: 0; }
 
 [hidden] { display: none !important; }
+
+@media (max-width: 860px) {
+  /* The reading control is the one thing that must survive a narrow window,
+     so the rest of the bar wraps under it rather than squeezing it. */
+  #transport { flex-wrap: wrap; row-gap: 8px; }
+  #reading { order: -1; width: 100%; }
+  #reading .live { width: 100%; }
+  #reading .next { margin-left: auto; }
+  #transport .bar-sep { display: none; }
+}
 
 @media (max-width: 720px) {
   #readout { width: auto; left: 8px; right: 8px; top: 8px; }

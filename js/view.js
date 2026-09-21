@@ -154,6 +154,11 @@ export class View {
    * Widen the remembered action box to include `box`. Never narrows — see the
    * note on `actionBox`.
    */
+  /** Forget the remembered region. The reader changed how much book exists. */
+  resetAction() {
+    this.actionBox = null;
+  }
+
   noteAction(box) {
     if (!box) return;
     const a = this.actionBox;

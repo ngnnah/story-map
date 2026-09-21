@@ -46,26 +46,28 @@ hide them.
 
 ## Reading along
 
-Press **Spoiler-free** in the bottom bar and a second, hollow handle appears on
-the slider: drag it to the last chapter you finished. Everything to its right is
-withheld — the playhead cannot go past it, later chapters go blank, the event
-ticks and the lane strip clip, characters you have not met are not listed, and
-a place nobody has reached yet is not drawn, because a place name is a spoiler
-on its own.
+Press **Reading this now…** in the bottom bar. It becomes one line that reads
 
-The hollow handle is how far you have read; the solid one is where you are
-looking. They move independently, except that pulling the wall back past the
-playhead brings the playhead with it. Arrow keys nudge a focused handle by a
-chapter, `Home`/`End` send it to either end, and the **✕** lifts the wall for a
-re-read. The position is remembered per book.
+> Read to  −  ch. 14 of 60  [ Finished this chapter → ]  show all
 
-Turning it on mid-book starts the wall at the chapter you are looking at, so
-nothing you can already see disappears. A book whose JSON sets `"readAlong":
-true` opens walled at chapter 0 instead — that is a fresh read, and there the
-empty map is the honest picture.
+That is the whole feature. Finish a chapter in the book, press the button, and
+the map plays through what just happened. Nothing past your chapter is shown:
+the slider stops there, later chapters are dimmed, ticks and the lane strip
+clip, characters you have not met are not listed, and places nobody has
+reached are not marked. An accent line runs down the bar showing exactly where
+you are. **show all** lifts it for a re-read; **−** steps back.
 
-Everything the app knows stays in the file. The wall is a filter on what is
-drawn, not on what is loaded, so nothing is lost by setting it.
+The camera reframes on what you have read, so early chapters fill the screen
+instead of sitting in one corner of a continent.
+
+A book whose JSON sets `"readAlong": true` opens already walled at chapter 0 —
+that is a fresh read, and an empty map is the honest picture. Turning it on
+mid-book instead starts at the chapter you are looking at, so nothing you can
+already see disappears. The position is remembered per book.
+
+One thing it cannot hide: the map image has place names engraved on it. The app
+will not *mark* somewhere you have not reached, but it cannot un-print
+"Skull Mountain" from the artwork.
 
 ## Writing a book
 
