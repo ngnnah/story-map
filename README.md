@@ -24,7 +24,7 @@ ES module imports, `fetch` of the book JSON, and IndexedDB are all blocked
 there. GitHub Pages is fine.
 
 ```sh
-npm test           # 79 tests, no dependencies
+npm test           # 144 tests, no dependencies
 ```
 
 ## Keys
@@ -78,7 +78,23 @@ One JSON file per book. The whole schema:
 }
 ```
 
-A waypoint says **who is where on which page**. Everything else follows:
+### Pages, or chapters
+
+Page numbers belong to one printing. A reader knows they are in chapter 12,
+not on page 138 of your edition, so a book may drop `startPage` from its
+chapters entirely and say *when* as a chapter and how far through it:
+
+```json
+"chapters":  [{ "n": 1 }, { "n": 2 }],
+"waypoints": [{ "who": "wil", "ch": 2, "at": 0.5, "place": "arborlon" }]
+```
+
+Then a position of 12.4 *is* chapter 12, 40% of the way through, and no page
+number is shown because none exists. Give every chapter a `startPage` and you
+get the page axis back, with `ch` + `at` interpolating inside each chapter.
+Mixing the two resolves as chapters and says so in the readout.
+
+A waypoint says **who is where, when**. Everything else follows:
 
 - **Travelling.** Between two waypoints at different places, the pin
   interpolates along the route, easing out of one town and into the next.
@@ -155,12 +171,21 @@ fractions, `hypot(dx, dy)` over-measures vertical legs — by 43% on a 0.74
 map — and arc-length interpolation would make pins crawl north–south and race
 east–west.
 
-## The Shannara data is a stub
+## The two Shannara books
 
-`data/shannara.json` covers the first six chapters. Past a character's last
-waypoint the app holds them in place, which is a rule rather than something
-the book said — so those pins are drawn faded, and the lane strip draws the
-held tail faint. A half-written dataset should look half-written.
+`data/shannara.json` is the whole of *The Sword of Shannara* — 60 chapters, 15
+characters, from the stranger on the Duln road to Shea coming home. Its chapter
+numbers are a reconstruction; the order of the journey is the reliable part.
+
+`data/elfstones.json` is a scaffold: 44 places measured off the map, the
+opening cast, 60 numbered chapters, and no waypoints at all. It opens with the
+reading wall at chapter 0, so it shows you nothing until you tell it how far
+you have read.
+
+Past a character's last waypoint the app holds them in place, which is a rule
+rather than something the book said — so those pins are drawn faded, and the
+lane strip draws the held tail faint. A half-written dataset should look
+half-written.
 
 ## Map credit
 
