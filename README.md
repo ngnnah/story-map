@@ -46,12 +46,18 @@ hide them.
 
 ## Reading along
 
-Type the last chapter you finished into **Read to ch.** in the bottom bar and
-the app refuses to show you anything past it. The slider stops there, later
-chapters go blank, the event ticks and the lane strip clip, characters you have
-not met are not listed, and a place nobody has reached yet is not drawn — a
-place name is a spoiler on its own. `all` lifts the wall for a re-read. The
-number is remembered per book.
+Press **wall** in the bottom bar and a second, hollow handle appears on the
+slider: drag it to the last chapter you finished. Everything to its right is
+withheld — the playhead cannot go past it, later chapters go blank, the event
+ticks and the lane strip clip, characters you have not met are not listed, and
+a place nobody has reached yet is not drawn, because a place name is a spoiler
+on its own.
+
+The hollow handle is how far you have read; the solid one is where you are
+looking. They move independently, except that pulling the wall back past the
+playhead brings the playhead with it. Arrow keys nudge a focused handle by a
+chapter, `Home`/`End` send it to either end, and **all** lifts the wall for a
+re-read. The position is remembered per book.
 
 Everything the app knows stays in the file. The wall is a filter on what is
 drawn, not on what is loaded, so nothing is lost by setting it.

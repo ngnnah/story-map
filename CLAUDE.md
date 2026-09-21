@@ -110,7 +110,11 @@ Dayel) render as "not yet" and break nothing. That's the intended way to work.
 ## The reading wall
 
 `readTo` is one integer per book: the last chapter the reader finished, or
-`null` for no wall. A book with `"readAlong": true` defaults to 0 — nothing
+`null` for no wall. It is set by a second handle on the rail — hollow, versus
+the solid playhead — which snaps to chapter boundaries. The two ride the same
+track and mean different things (how far you have read, versus where you are
+looking), which is why they are drawn differently and why the wall handle
+stops its pointerdown from reaching the rail's own scrub handler. A book with `"readAlong": true` defaults to 0 — nothing
 revealed — rather than to the whole novel.
 
 `ceiling()` is the first position NOT read; `readEnd()` is a hair below it and

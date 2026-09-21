@@ -83,7 +83,6 @@ async function loadBook(raw, { imageBlob } = {}) {
   // rather than showing the reader a novel they have not opened.
   const savedTo = pref(`readTo:${book.id}`, undefined);
   readTo = savedTo !== undefined ? savedTo : (raw.readAlong ? 0 : null);
-  $('readto').max = book.chapters.at(-1)?.n ?? 1;
   buildRoster();
   buildChapters();
   buildLanes();
@@ -196,7 +195,15 @@ function applyCeiling() {
   );
   document.body.classList.toggle('walled', walled());
   $('readto-wrap').classList.toggle('off', !walled());
-  $('readto').value = walled() ? readTo : '';
+  $('readto-all').textContent = walled() ? 'all' : 'wall';
+  $('readto-all').title = walled() ? 'Show the whole book' : 'Hide what you have not read';
+  $('readto-label').textContent = walled() ? `Read to ch. ${readTo}` : 'Read to ch. —';
+  const wall = $('wall');
+  wall.hidden = !walled();
+  wall.setAttribute('aria-valuemin', 0);
+  wall.setAttribute('aria-valuemax', book.chapters.at(-1)?.n ?? 1);
+  wall.setAttribute('aria-valuenow', walled() ? readTo : 0);
+  wall.setAttribute('aria-valuetext', walled() ? `read to chapter ${readTo}` : 'whole book shown');
   if (clock.shown > top) clock.jumpTo(top);
   view.noteAction(visitedBox(book, readEnd()));
 }
@@ -515,20 +522,19 @@ function drawRail(page) {
   $('rail').setAttribute('aria-valuetext',
     `page ${Math.round(page)}${ch ? `, chapter ${ch.n}${ch.title ? `, ${ch.title}` : ''}` : ''}`);
 
-  // The stretch you have not read, hatched and dead.
-  let beyond = $('rail').querySelector('.beyond');
+  // The stretch you have not read, hatched and dead, with the handle that
+  // sets it sitting on the boundary.
+  const beyond = $('rail').querySelector('.beyond');
+  const wall = $('wall');
   if (walled()) {
-    if (!beyond) {
-      beyond = document.createElement('div');
-      beyond.className = 'beyond';
-      $('rail').append(beyond);
-    }
-    const stop = ((ceiling() - book.pages[0]) / span) * 100;
+    const stop = clamp(((ceiling() - book.pages[0]) / span) * 100, 0, 100);
     beyond.style.left = `${stop}%`;
-    beyond.style.right = '0';
     beyond.hidden = stop >= 100;
-  } else if (beyond) {
+    wall.style.left = `${stop}%`;
+    wall.hidden = false;
+  } else {
     beyond.hidden = true;
+    wall.hidden = true;
   }
 
   const head = $('lane-head');
@@ -812,12 +818,59 @@ function hidePopover() {
 $('play').addEventListener('click', () => clock.toggle());
 $('speed').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(clock.speed) + 1) % SPEEDS.length]));
 $('fit-btn').addEventListener('click', () => view.toggleFrame());
-$('readto').addEventListener('change', (e) => setReadTo(e.target.value));
-$('readto').addEventListener('keydown', (e) => {
-  e.stopPropagation();                       // the window handler owns these keys
-  if (e.key === 'Enter') setReadTo(e.target.value);
+/**
+ * The wall handle. It rides the same rail as the playhead but means something
+ * different — how far you have read, not where you are looking — so it snaps
+ * to whole chapters and is drawn hollow rather than solid.
+ */
+const wallEl = $('wall');
+let wallDrag = false;
+
+/** The chapter whose end is nearest this x, so the handle lands on a boundary. */
+function wallChapterAt(clientX) {
+  const b = rail.getBoundingClientRect();
+  const f = clamp((clientX - b.left) / b.width, 0, 1);
+  const pos = book.pages[0] + f * (book.pages[1] - book.pages[0]);
+  let best = 0;
+  let bestD = Math.abs(book.pages[0] - pos);          // chapter 0: nothing read
+  for (const c of book.chapters) {
+    const i = book.chapters.indexOf(c);
+    const end = book.chapters[i + 1] ? book.chapters[i + 1].start : book.pages[1];
+    const d = Math.abs(end - pos);
+    if (d < bestD) { bestD = d; best = c.n; }
+  }
+  return best;
+}
+
+wallEl.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();                      // not a scrub
+  wallDrag = true;
+  rail.classList.add('wall-dragging');
+  wallEl.setPointerCapture(e.pointerId);
 });
-$('readto-all').addEventListener('click', () => setReadTo(''));
+addEventListener('pointermove', (e) => {
+  if (!wallDrag) return;
+  setReadTo(wallChapterAt(e.clientX));
+});
+addEventListener('pointerup', () => {
+  if (!wallDrag) return;
+  wallDrag = false;
+  rail.classList.remove('wall-dragging');
+});
+wallEl.addEventListener('keydown', (e) => {
+  const step = { ArrowLeft: -1, ArrowRight: 1, PageDown: -5, PageUp: 5 }[e.key];
+  const last = book.chapters.at(-1)?.n ?? 1;
+  if (step === undefined && e.key !== 'Home' && e.key !== 'End') return;
+  e.preventDefault();
+  e.stopPropagation();                      // the window handler owns these too
+  if (e.key === 'Home') return setReadTo(0);
+  if (e.key === 'End') return setReadTo(last);
+  setReadTo(Math.min(Math.max((readTo ?? 0) + step, 0), last));
+});
+
+// Clicking the empty rail while walled sets the wall, not the playhead, only
+// if you grabbed the handle — otherwise the rail keeps its old job.
+$('readto-all').addEventListener('click', () => setReadTo(walled() ? '' : 0));
 
 $('scrim-btn').addEventListener('click', cycleScrim);
 $('help-btn').addEventListener('click', () => { $('help').hidden = !$('help').hidden; });

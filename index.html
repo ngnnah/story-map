@@ -50,6 +50,10 @@
        aria-valuemin="1" aria-valuemax="2" aria-valuenow="1">
     <div class="fill"></div>
     <svg class="ticks" aria-hidden="true"></svg>
+    <!-- How far the reader has read. Everything to its right is withheld. -->
+    <div class="beyond" hidden></div>
+    <div class="wall" id="wall" role="slider" tabindex="0"
+         aria-label="How far you have read" hidden></div>
     <div class="thumb"></div>
   </div>
   <svg id="gutter" aria-hidden="true"></svg>
@@ -59,11 +63,10 @@
     <button class="btn" id="speed" title="&lt; and &gt;">1×</button>
     <span class="page"><span id="page-now">—</span> <span id="page-of"></span></span>
     <span class="spacer"></span>
-    <label class="readto" id="readto-wrap" title="The last chapter you finished. Nothing past it is shown.">
-      <span id="readto-label">Read to ch.</span>
-      <input class="btn" type="number" id="readto" min="0" step="1" inputmode="numeric">
+    <span class="readto" id="readto-wrap" title="Drag the hollow handle on the slider to set how far you have read.">
+      <span id="readto-label">Read to ch. —</span>
       <button class="btn ghost" id="readto-all" title="Show the whole book">all</button>
-    </label>
+    </span>
     <select class="btn" id="book-pick" title="Which book"></select>
     <button class="btn" id="scrim-btn" title="M — darken the map">Scrim</button>
     <button class="btn" id="fit-btn" title="R — fit the map">Fit</button>
