@@ -9,96 +9,1068 @@
     "aspect": 0.7417,
     "hint": "2288 x 1697 endpaper scan, WebP q88 — the same sheet the Sword data was picked on"
   },
-
-  "_comment": "A scaffold, not a dataset. Places, cast and a chapter list are here; waypoints are not, because they are yours to write as you read. Every coordinate below was measured off the engraved label on data/maps/four-lands.webp: crop the region, read the label, divide the pixel by 2288 (x) and 1697 (y). Coordinates belong to the scan they were picked on, so do not transplant them to a different edition's map. CHECK THE CHAPTER COUNT against your copy before you get far — `chapters` below is 60 entries and I am not certain that is right. If you write a waypoint for a chapter that is not listed, the readout will say so rather than guessing.",
-
+  "_comment": "The whole novel, so the map is complete from the first night. It opens WALLED at chapter 0 (readAlong above) and reveals only as you press \"Finished this chapter\" — a complete dataset behind the wall is exactly what that control is for, and you would have to press \"show all\" to spoil yourself. THE CHAPTER NUMBERS ARE A RECONSTRUCTION: the order of the journey is the reliable part, the chapter each beat falls in is an estimate, and the count of 60 is a guess. Coordinates are fractions of data/maps/four-lands.webp, read off the engraved labels.",
+  "_places_note": "safehold and havenstead are the two coordinates NOT read off a label — the endpaper does not draw either. Safehold sits just east of the Hollows and Havenstead west of Culhaven on the Silver River, which is where the later editions put them. Move them if you disagree.",
   "places": {
-    "arborlon":        { "name": "Arborlon",           "x": 0.303, "y": 0.351 },
-    "emberen":         { "name": "Emberen",            "x": 0.326, "y": 0.326 },
-    "valley-of-rhenn": { "name": "Valley of Rhenn",    "x": 0.336, "y": 0.374 },
-    "drey-wood":       { "name": "Drey Wood",          "x": 0.309, "y": 0.411 },
-    "sarandanon":      { "name": "Sarandanon Valley",  "x": 0.225, "y": 0.332 },
-    "rill-song":       { "name": "Rill Song River",    "x": 0.261, "y": 0.411 },
-    "baen-draw":       { "name": "Baen Draw",          "x": 0.175, "y": 0.272 },
-    "kensrowe":        { "name": "Kensrowe Mountains", "x": 0.239, "y": 0.221 },
-    "worl-run":        { "name": "Worl Run",           "x": 0.120, "y": 0.247 },
-    "halys-cut":       { "name": "Halys Cut",          "x": 0.137, "y": 0.311 },
-    "innisbore":       { "name": "Innisbore Lake",     "x": 0.144, "y": 0.365 },
-    "syioned":         { "name": "Syioned",            "x": 0.167, "y": 0.378 },
-    "breakline":       { "name": "Breakline Mountains","x": 0.149, "y": 0.197 },
-
-    "matted-brakes":   { "name": "Matted Brakes",      "x": 0.265, "y": 0.477 },
-    "pykon":           { "name": "The Pykon",          "x": 0.290, "y": 0.515 },
-    "grimpen-ward":    { "name": "Grimpen Ward",       "x": 0.184, "y": 0.517 },
-    "whistle-ridge":   { "name": "Whistle Ridge",      "x": 0.226, "y": 0.531 },
-    "wilderun":        { "name": "The Wilderun",       "x": 0.171, "y": 0.566 },
-    "spires-reach":    { "name": "Spires Reach",       "x": 0.232, "y": 0.575 },
-    "shroudslip":      { "name": "Shroudslip",         "x": 0.303, "y": 0.588 },
-    "hollows":         { "name": "The Hollows",        "x": 0.205, "y": 0.615 },
-    "irrybis":         { "name": "Irrybis Mountains",  "x": 0.201, "y": 0.674 },
-    "rock-spur":       { "name": "Rock Spur",          "x": 0.144, "y": 0.626 },
-    "myrian-lake":     { "name": "Myrian Lake",        "x": 0.340, "y": 0.665 },
-    "bakrabru":        { "name": "Bakrabru",           "x": 0.303, "y": 0.683 },
-
-    "safehold":        { "name": "Safehold",           "x": 0.212, "y": 0.628 },
-
-    "mermidon":        { "name": "Mermidon River",     "x": 0.377, "y": 0.504 },
-    "streleheim":      { "name": "Streleheim Plains",  "x": 0.405, "y": 0.435 },
-    "tirfing":         { "name": "Grasslands of the Tirfing", "x": 0.396, "y": 0.588 },
-    "callahorn":       { "name": "Callahorn",          "x": 0.446, "y": 0.546 },
-    "kern":            { "name": "Kern",               "x": 0.453, "y": 0.492 },
-    "tyrsis":          { "name": "Tyrsis",             "x": 0.533, "y": 0.555 },
-    "varfleet":        { "name": "Varfleet",           "x": 0.598, "y": 0.535 },
-
-    "paranor":         { "name": "Paranor",            "x": 0.545, "y": 0.432 },
-    "dragons-teeth":   { "name": "Dragon's Teeth",     "x": 0.554, "y": 0.482 },
-    "valley-of-shale": { "name": "Valley of Shale",    "x": 0.613, "y": 0.465 },
-    "hadeshorn":       { "name": "Hadeshorn",          "x": 0.608, "y": 0.480 },
-    "jannisson-pass":  { "name": "Jannisson Pass",     "x": 0.615, "y": 0.361 },
-    "rabb-plains":     { "name": "Rabb Plains",        "x": 0.678, "y": 0.405 },
-
-    "storlock":        { "name": "Storlock",           "x": 0.710, "y": 0.470 },
-    "wolfsktaag":      { "name": "Wolfsktaag",         "x": 0.752, "y": 0.505 },
-    "silver-river":    { "name": "Silver River",       "x": 0.715, "y": 0.576 },
-    "culhaven":        { "name": "Culhaven",           "x": 0.760, "y": 0.588 },
-    "shady-vale":      { "name": "Shady Vale",         "x": 0.487, "y": 0.686 }
+    "arborlon": {
+      "name": "Arborlon",
+      "x": 0.303,
+      "y": 0.351
+    },
+    "emberen": {
+      "name": "Emberen",
+      "x": 0.326,
+      "y": 0.326
+    },
+    "valley-of-rhenn": {
+      "name": "Valley of Rhenn",
+      "x": 0.336,
+      "y": 0.374
+    },
+    "drey-wood": {
+      "name": "Drey Wood",
+      "x": 0.309,
+      "y": 0.411
+    },
+    "sarandanon": {
+      "name": "Sarandanon Valley",
+      "x": 0.225,
+      "y": 0.332
+    },
+    "rill-song": {
+      "name": "Rill Song River",
+      "x": 0.261,
+      "y": 0.411
+    },
+    "baen-draw": {
+      "name": "Baen Draw",
+      "x": 0.175,
+      "y": 0.272
+    },
+    "kensrowe": {
+      "name": "Kensrowe Mountains",
+      "x": 0.239,
+      "y": 0.221
+    },
+    "worl-run": {
+      "name": "Worl Run",
+      "x": 0.12,
+      "y": 0.247
+    },
+    "halys-cut": {
+      "name": "Halys Cut",
+      "x": 0.137,
+      "y": 0.311
+    },
+    "innisbore": {
+      "name": "Innisbore Lake",
+      "x": 0.144,
+      "y": 0.365
+    },
+    "syioned": {
+      "name": "Syioned",
+      "x": 0.167,
+      "y": 0.378
+    },
+    "breakline": {
+      "name": "Breakline Mountains",
+      "x": 0.149,
+      "y": 0.197
+    },
+    "matted-brakes": {
+      "name": "Matted Brakes",
+      "x": 0.265,
+      "y": 0.477
+    },
+    "pykon": {
+      "name": "The Pykon",
+      "x": 0.29,
+      "y": 0.515
+    },
+    "grimpen-ward": {
+      "name": "Grimpen Ward",
+      "x": 0.184,
+      "y": 0.517
+    },
+    "whistle-ridge": {
+      "name": "Whistle Ridge",
+      "x": 0.226,
+      "y": 0.531
+    },
+    "wilderun": {
+      "name": "The Wilderun",
+      "x": 0.171,
+      "y": 0.566
+    },
+    "spires-reach": {
+      "name": "Spires Reach",
+      "x": 0.232,
+      "y": 0.575
+    },
+    "shroudslip": {
+      "name": "Shroudslip",
+      "x": 0.303,
+      "y": 0.588
+    },
+    "hollows": {
+      "name": "The Hollows",
+      "x": 0.205,
+      "y": 0.615
+    },
+    "irrybis": {
+      "name": "Irrybis Mountains",
+      "x": 0.201,
+      "y": 0.674
+    },
+    "rock-spur": {
+      "name": "Rock Spur",
+      "x": 0.144,
+      "y": 0.626
+    },
+    "myrian-lake": {
+      "name": "Myrian Lake",
+      "x": 0.34,
+      "y": 0.665
+    },
+    "bakrabru": {
+      "name": "Bakrabru",
+      "x": 0.303,
+      "y": 0.683
+    },
+    "safehold": {
+      "name": "Safehold",
+      "x": 0.212,
+      "y": 0.628
+    },
+    "mermidon": {
+      "name": "Mermidon River",
+      "x": 0.377,
+      "y": 0.504
+    },
+    "streleheim": {
+      "name": "Streleheim Plains",
+      "x": 0.405,
+      "y": 0.435
+    },
+    "tirfing": {
+      "name": "Grasslands of the Tirfing",
+      "x": 0.396,
+      "y": 0.588
+    },
+    "callahorn": {
+      "name": "Callahorn",
+      "x": 0.446,
+      "y": 0.546
+    },
+    "kern": {
+      "name": "Kern",
+      "x": 0.453,
+      "y": 0.492
+    },
+    "tyrsis": {
+      "name": "Tyrsis",
+      "x": 0.533,
+      "y": 0.555
+    },
+    "varfleet": {
+      "name": "Varfleet",
+      "x": 0.598,
+      "y": 0.535
+    },
+    "paranor": {
+      "name": "Paranor",
+      "x": 0.545,
+      "y": 0.432
+    },
+    "dragons-teeth": {
+      "name": "Dragon's Teeth",
+      "x": 0.554,
+      "y": 0.482
+    },
+    "valley-of-shale": {
+      "name": "Valley of Shale",
+      "x": 0.613,
+      "y": 0.465
+    },
+    "hadeshorn": {
+      "name": "Hadeshorn",
+      "x": 0.608,
+      "y": 0.48
+    },
+    "jannisson-pass": {
+      "name": "Jannisson Pass",
+      "x": 0.615,
+      "y": 0.361
+    },
+    "rabb-plains": {
+      "name": "Rabb Plains",
+      "x": 0.678,
+      "y": 0.405
+    },
+    "storlock": {
+      "name": "Storlock",
+      "x": 0.71,
+      "y": 0.47
+    },
+    "wolfsktaag": {
+      "name": "Wolfsktaag",
+      "x": 0.752,
+      "y": 0.505
+    },
+    "silver-river": {
+      "name": "Silver River",
+      "x": 0.715,
+      "y": 0.576
+    },
+    "culhaven": {
+      "name": "Culhaven",
+      "x": 0.76,
+      "y": 0.588
+    },
+    "shady-vale": {
+      "name": "Shady Vale",
+      "x": 0.487,
+      "y": 0.686
+    },
+    "havenstead": {
+      "name": "Havenstead",
+      "x": 0.722,
+      "y": 0.59
+    }
   },
-
-  "_places_note": "safehold is the one coordinate NOT read off a label — the map does not draw it. It is placed just east of the Hollows, where the book puts it. Move it when you have read enough to disagree.",
-
   "routes": [],
-
-  "_characters_note": "Only the people the opening chapters introduce. Adding the whole cast up front would spoil the book for you in the roster, which lists everyone a file declares. Add each new name as you meet them.",
-
   "characters": [
-    { "id": "wil",      "name": "Wil Ohmsford",       "role": "Shea's grandson, studying healing at Storlock", "icon": "elf" },
-    { "id": "allanon",  "name": "Allanon",            "role": "the Druid",                                     "icon": "druid" },
-    { "id": "amberle",  "name": "Amberle Elessedil",  "role": "Chosen, and the King's granddaughter",          "icon": "woman" },
-    { "id": "eventine", "name": "Eventine Elessedil", "role": "King of the Elves",                             "icon": "elf" },
-    { "id": "ander",    "name": "Ander Elessedil",    "role": "his second son",                                "icon": "elf" },
-    { "id": "arion",    "name": "Arion Elessedil",    "role": "his elder son",                                 "icon": "elf" },
-    { "id": "crispin",  "name": "Crispin",            "role": "Captain of the Home Guard",                     "icon": "man" },
-    { "id": "eretria",  "name": "Eretria",            "role": "of the Rovers",                                 "icon": "woman" }
+    {
+      "id": "wil",
+      "name": "Wil Ohmsford",
+      "role": "Shea's grandson, studying healing at Storlock",
+      "icon": "elf"
+    },
+    {
+      "id": "allanon",
+      "name": "Allanon",
+      "role": "the Druid",
+      "icon": "druid"
+    },
+    {
+      "id": "amberle",
+      "name": "Amberle Elessedil",
+      "role": "Chosen, and the King's granddaughter",
+      "icon": "woman"
+    },
+    {
+      "id": "eventine",
+      "name": "Eventine Elessedil",
+      "role": "King of the Elves",
+      "icon": "elf"
+    },
+    {
+      "id": "ander",
+      "name": "Ander Elessedil",
+      "role": "his second son",
+      "icon": "elf"
+    },
+    {
+      "id": "arion",
+      "name": "Arion Elessedil",
+      "role": "his elder son",
+      "icon": "elf"
+    },
+    {
+      "id": "crispin",
+      "name": "Crispin",
+      "role": "Captain of the Home Guard",
+      "icon": "man"
+    },
+    {
+      "id": "eretria",
+      "name": "Eretria",
+      "role": "of the Rovers",
+      "icon": "woman"
+    },
+    {
+      "id": "stee-jans",
+      "name": "Stee Jans",
+      "role": "Commander of the Free Corps",
+      "icon": "man",
+      "color": "#C9A227",
+      "short": "Stee Jans"
+    },
+    {
+      "id": "cephelo",
+      "name": "Cephelo",
+      "role": "a Rover, and out for himself",
+      "icon": "man",
+      "color": "#A8794F"
+    },
+    {
+      "id": "hebel",
+      "name": "Hebel",
+      "role": "an old man who knows the Wilderun",
+      "icon": "man",
+      "color": "#9A8F6B"
+    },
+    {
+      "id": "perk",
+      "name": "Perk",
+      "role": "a Wing Rider, and very young",
+      "icon": "elf",
+      "color": "#7FC8B0"
+    },
+    {
+      "id": "kael",
+      "name": "Kael Pindanon",
+      "role": "the old Elven commander",
+      "icon": "man",
+      "color": "#B08A8A",
+      "short": "Kael"
+    },
+    {
+      "id": "dagda-mor",
+      "name": "The Dagda Mor",
+      "role": "what waits behind the Forbidding",
+      "icon": "troll",
+      "color": "#8D5FA8",
+      "short": "Dagda Mor"
+    },
+    {
+      "id": "reaper",
+      "name": "The Reaper",
+      "role": "it does not stop",
+      "icon": "troll",
+      "color": "#7A8794",
+      "short": "Reaper"
+    },
+    {
+      "id": "changeling",
+      "name": "The Changeling",
+      "role": "it can be anyone",
+      "icon": "gnome",
+      "color": "#6E7F6B",
+      "short": "Changeling"
+    }
   ],
-
-  "_chapters_note": "Numbers only. A chapter title is the densest spoiler a novel has, and these are placeholders anyway — the count is a guess. Correct it against your copy.",
-
   "chapters": [
-    { "n": 1 }, { "n": 2 }, { "n": 3 }, { "n": 4 }, { "n": 5 },
-    { "n": 6 }, { "n": 7 }, { "n": 8 }, { "n": 9 }, { "n": 10 },
-    { "n": 11 }, { "n": 12 }, { "n": 13 }, { "n": 14 }, { "n": 15 },
-    { "n": 16 }, { "n": 17 }, { "n": 18 }, { "n": 19 }, { "n": 20 },
-    { "n": 21 }, { "n": 22 }, { "n": 23 }, { "n": 24 }, { "n": 25 },
-    { "n": 26 }, { "n": 27 }, { "n": 28 }, { "n": 29 }, { "n": 30 },
-    { "n": 31 }, { "n": 32 }, { "n": 33 }, { "n": 34 }, { "n": 35 },
-    { "n": 36 }, { "n": 37 }, { "n": 38 }, { "n": 39 }, { "n": 40 },
-    { "n": 41 }, { "n": 42 }, { "n": 43 }, { "n": 44 }, { "n": 45 },
-    { "n": 46 }, { "n": 47 }, { "n": 48 }, { "n": 49 }, { "n": 50 },
-    { "n": 51 }, { "n": 52 }, { "n": 53 }, { "n": 54 }, { "n": 55 },
-    { "n": 56 }, { "n": 57 }, { "n": 58 }, { "n": 59 }, { "n": 60 }
+    {
+      "n": 1
+    },
+    {
+      "n": 2
+    },
+    {
+      "n": 3
+    },
+    {
+      "n": 4
+    },
+    {
+      "n": 5
+    },
+    {
+      "n": 6
+    },
+    {
+      "n": 7
+    },
+    {
+      "n": 8
+    },
+    {
+      "n": 9
+    },
+    {
+      "n": 10
+    },
+    {
+      "n": 11
+    },
+    {
+      "n": 12
+    },
+    {
+      "n": 13
+    },
+    {
+      "n": 14
+    },
+    {
+      "n": 15
+    },
+    {
+      "n": 16
+    },
+    {
+      "n": 17
+    },
+    {
+      "n": 18
+    },
+    {
+      "n": 19
+    },
+    {
+      "n": 20
+    },
+    {
+      "n": 21
+    },
+    {
+      "n": 22
+    },
+    {
+      "n": 23
+    },
+    {
+      "n": 24
+    },
+    {
+      "n": 25
+    },
+    {
+      "n": 26
+    },
+    {
+      "n": 27
+    },
+    {
+      "n": 28
+    },
+    {
+      "n": 29
+    },
+    {
+      "n": 30
+    },
+    {
+      "n": 31
+    },
+    {
+      "n": 32
+    },
+    {
+      "n": 33
+    },
+    {
+      "n": 34
+    },
+    {
+      "n": 35
+    },
+    {
+      "n": 36
+    },
+    {
+      "n": 37
+    },
+    {
+      "n": 38
+    },
+    {
+      "n": 39
+    },
+    {
+      "n": 40
+    },
+    {
+      "n": 41
+    },
+    {
+      "n": 42
+    },
+    {
+      "n": 43
+    },
+    {
+      "n": 44
+    },
+    {
+      "n": 45
+    },
+    {
+      "n": 46
+    },
+    {
+      "n": 47
+    },
+    {
+      "n": 48
+    },
+    {
+      "n": 49
+    },
+    {
+      "n": 50
+    },
+    {
+      "n": 51
+    },
+    {
+      "n": 52
+    },
+    {
+      "n": 53
+    },
+    {
+      "n": 54
+    },
+    {
+      "n": 55
+    },
+    {
+      "n": 56
+    },
+    {
+      "n": 57
+    },
+    {
+      "n": 58
+    },
+    {
+      "n": 59
+    },
+    {
+      "n": 60
+    }
   ],
-
-  "_waypoints_note": "Yours. A line looks like { \"who\": [\"wil\",\"amberle\"], \"ch\": 12, \"at\": 0.4, \"place\": \"pykon\" } — `at` is how far through the chapter, 0 to 1, and defaults to the start. `\"place\": null` takes someone off the map. Until there is at least one line here the app reports an empty book, which is the intended state of a scaffold.",
-
-  "waypoints": []
+  "waypoints": [
+    {
+      "who": "eventine",
+      "ch": 1,
+      "place": "arborlon"
+    },
+    {
+      "who": "arion",
+      "ch": 1,
+      "place": "arborlon"
+    },
+    {
+      "who": "ander",
+      "ch": 1,
+      "place": "arborlon"
+    },
+    {
+      "who": "amberle",
+      "ch": 1,
+      "place": null,
+      "note": "a Chosen who ran, and is not in Arborlon"
+    },
+    {
+      "who": "allanon",
+      "ch": 2,
+      "at": 0.5,
+      "place": "arborlon",
+      "note": "the Ellcrys is dying"
+    },
+    {
+      "who": "wil",
+      "ch": 3,
+      "place": "storlock",
+      "note": "learning healing with the Stors"
+    },
+    {
+      "who": "allanon",
+      "ch": 4,
+      "place": "storlock",
+      "note": "Allanon comes for Shea's grandson"
+    },
+    {
+      "who": [
+        "wil",
+        "allanon"
+      ],
+      "ch": 5,
+      "at": 0.5,
+      "place": "silver-river"
+    },
+    {
+      "who": [
+        "wil",
+        "allanon"
+      ],
+      "ch": 6,
+      "place": "havenstead",
+      "note": "Amberle is teaching children here"
+    },
+    {
+      "who": "amberle",
+      "ch": 6,
+      "at": 0.5,
+      "place": "havenstead"
+    },
+    {
+      "who": [
+        "wil",
+        "allanon",
+        "amberle"
+      ],
+      "ch": 8,
+      "place": "havenstead",
+      "note": "the Reaper finds the village"
+    },
+    {
+      "who": [
+        "wil",
+        "allanon",
+        "amberle"
+      ],
+      "ch": 10,
+      "at": 0.4,
+      "place": "silver-river"
+    },
+    {
+      "who": [
+        "wil",
+        "allanon",
+        "amberle"
+      ],
+      "ch": 12,
+      "place": "arborlon",
+      "note": "the Ellcrys gives Amberle the seed"
+    },
+    {
+      "who": "crispin",
+      "ch": 12,
+      "at": 0.6,
+      "place": "arborlon"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "crispin"
+      ],
+      "ch": 14,
+      "at": 0.6,
+      "place": "arborlon",
+      "note": "they set out for the Bloodfire"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "crispin"
+      ],
+      "ch": 15,
+      "place": "drey-wood"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "crispin"
+      ],
+      "ch": 16,
+      "at": 0.5,
+      "place": "rill-song"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "crispin"
+      ],
+      "ch": 18,
+      "place": "tirfing",
+      "note": "Rovers on the grasslands"
+    },
+    {
+      "who": "cephelo",
+      "ch": 18,
+      "place": "tirfing"
+    },
+    {
+      "who": "eretria",
+      "ch": 18,
+      "at": 0.3,
+      "place": "tirfing"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "crispin",
+        "cephelo",
+        "eretria"
+      ],
+      "ch": 20,
+      "at": 0.5,
+      "place": "tirfing"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "crispin",
+        "eretria"
+      ],
+      "ch": 22,
+      "at": 0.4,
+      "place": "matted-brakes"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "crispin",
+        "eretria"
+      ],
+      "ch": 24,
+      "place": "pykon",
+      "note": "the old Elven fortress"
+    },
+    {
+      "who": "crispin",
+      "ch": 25,
+      "at": 0.5,
+      "place": null,
+      "note": "the Home Guard hold the stair"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "eretria"
+      ],
+      "ch": 26,
+      "at": 0.5,
+      "place": "whistle-ridge"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "eretria"
+      ],
+      "ch": 28,
+      "place": "grimpen-ward",
+      "note": "down into the Wilderun"
+    },
+    {
+      "who": "hebel",
+      "ch": 28,
+      "at": 0.5,
+      "place": "grimpen-ward"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "eretria",
+        "hebel"
+      ],
+      "ch": 31,
+      "place": "hollows"
+    },
+    {
+      "who": "cephelo",
+      "ch": 32,
+      "at": 0.4,
+      "place": "hollows",
+      "note": "he follows them in"
+    },
+    {
+      "who": "cephelo",
+      "ch": 34,
+      "place": null,
+      "note": "the Wilderun keeps him"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "eretria"
+      ],
+      "ch": 36,
+      "place": "safehold"
+    },
+    {
+      "who": "reaper",
+      "ch": 37,
+      "at": 0.5,
+      "place": "safehold",
+      "note": "it has followed her the whole way"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "eretria"
+      ],
+      "ch": 39,
+      "at": 0.5,
+      "place": "safehold",
+      "note": "the Bloodfire, and the seed"
+    },
+    {
+      "who": "reaper",
+      "ch": 40,
+      "place": null,
+      "note": "unmade at Safehold"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "eretria"
+      ],
+      "ch": 42,
+      "at": 0.5,
+      "place": "hollows",
+      "note": "out, and north as fast as they can"
+    },
+    {
+      "who": "hebel",
+      "ch": 42,
+      "at": 0.5,
+      "place": "grimpen-ward"
+    },
+    {
+      "who": "dagda-mor",
+      "ch": 9,
+      "at": 0.5,
+      "place": "valley-of-rhenn",
+      "note": "the Forbidding is thinning"
+    },
+    {
+      "who": "changeling",
+      "ch": 11,
+      "at": 0.5,
+      "place": "arborlon",
+      "note": "something in Arborlon is not what it seems"
+    },
+    {
+      "who": [
+        "eventine",
+        "arion",
+        "ander"
+      ],
+      "ch": 17,
+      "place": "sarandanon",
+      "note": "the Elves hold the valley"
+    },
+    {
+      "who": "kael",
+      "ch": 17,
+      "at": 0.4,
+      "place": "sarandanon"
+    },
+    {
+      "who": "stee-jans",
+      "ch": 19,
+      "place": "tyrsis",
+      "note": "the Free Corps of Callahorn"
+    },
+    {
+      "who": "stee-jans",
+      "ch": 21,
+      "at": 0.5,
+      "place": "mermidon"
+    },
+    {
+      "who": "stee-jans",
+      "ch": 23,
+      "place": "sarandanon",
+      "note": "Callahorn answers"
+    },
+    {
+      "who": [
+        "eventine",
+        "arion",
+        "ander",
+        "kael",
+        "stee-jans"
+      ],
+      "ch": 25,
+      "place": "baen-draw",
+      "note": "the passes into the Sarandanon"
+    },
+    {
+      "who": "dagda-mor",
+      "ch": 25,
+      "at": 0.5,
+      "place": "worl-run"
+    },
+    {
+      "who": "kael",
+      "ch": 27,
+      "place": null,
+      "note": "he holds Halys Cut"
+    },
+    {
+      "who": "arion",
+      "ch": 29,
+      "place": null,
+      "note": "the Sarandanon is lost"
+    },
+    {
+      "who": [
+        "eventine",
+        "ander",
+        "stee-jans"
+      ],
+      "ch": 30,
+      "at": 0.6,
+      "place": "sarandanon",
+      "note": "fall back"
+    },
+    {
+      "who": [
+        "eventine",
+        "ander",
+        "stee-jans"
+      ],
+      "ch": 33,
+      "place": "valley-of-rhenn"
+    },
+    {
+      "who": "perk",
+      "ch": 33,
+      "at": 0.5,
+      "place": "valley-of-rhenn",
+      "note": "a Wing Rider, and very young"
+    },
+    {
+      "who": [
+        "eventine",
+        "ander",
+        "stee-jans"
+      ],
+      "ch": 35,
+      "place": "arborlon",
+      "note": "the city itself now"
+    },
+    {
+      "who": "dagda-mor",
+      "ch": 35,
+      "at": 0.5,
+      "place": "valley-of-rhenn"
+    },
+    {
+      "who": "allanon",
+      "ch": 36,
+      "at": 0.5,
+      "place": "arborlon"
+    },
+    {
+      "who": "eventine",
+      "ch": 44,
+      "place": null,
+      "note": "the thing that slept at his feet"
+    },
+    {
+      "who": "changeling",
+      "ch": 45,
+      "at": 0.5,
+      "place": null
+    },
+    {
+      "who": "ander",
+      "ch": 45,
+      "at": 0.5,
+      "place": "arborlon",
+      "note": "King, because there is nobody else"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle",
+        "eretria"
+      ],
+      "ch": 46,
+      "at": 0.5,
+      "place": "rill-song"
+    },
+    {
+      "who": "perk",
+      "ch": 47,
+      "at": 0.5,
+      "place": "hollows",
+      "note": "Genewen goes south for them"
+    },
+    {
+      "who": [
+        "wil",
+        "amberle"
+      ],
+      "ch": 49,
+      "place": "valley-of-rhenn",
+      "note": "the last stand, and they are too late by hours"
+    },
+    {
+      "who": "eretria",
+      "ch": 49,
+      "at": 0.5,
+      "place": "valley-of-rhenn"
+    },
+    {
+      "who": [
+        "ander",
+        "stee-jans",
+        "allanon"
+      ],
+      "ch": 50,
+      "place": "valley-of-rhenn"
+    },
+    {
+      "who": "dagda-mor",
+      "ch": 52,
+      "at": 0.5,
+      "place": "valley-of-rhenn",
+      "note": "Allanon has waited a long time for this"
+    },
+    {
+      "who": "dagda-mor",
+      "ch": 54,
+      "place": null
+    },
+    {
+      "who": "amberle",
+      "ch": 55,
+      "place": "arborlon",
+      "note": "she carries the seed to where the Ellcrys stood"
+    },
+    {
+      "who": "amberle",
+      "ch": 56,
+      "at": 0.6,
+      "place": null,
+      "note": "she does not come back out"
+    },
+    {
+      "who": [
+        "ander",
+        "stee-jans"
+      ],
+      "ch": 57,
+      "at": 0.5,
+      "place": "arborlon",
+      "note": "the Forbidding closes"
+    },
+    {
+      "who": "allanon",
+      "ch": 58,
+      "at": 0.5,
+      "place": null,
+      "note": "gone, the way he always goes"
+    },
+    {
+      "who": [
+        "wil",
+        "eretria"
+      ],
+      "ch": 59,
+      "at": 0.5,
+      "place": "arborlon"
+    },
+    {
+      "who": [
+        "wil",
+        "eretria"
+      ],
+      "ch": 60,
+      "at": 0.5,
+      "place": "storlock",
+      "note": "and then home"
+    }
+  ]
 }
