@@ -107,13 +107,29 @@ Elfstones edition labels that forest; only the colour edition does.
 Characters already declared with no waypoints yet (Balinor, Hendel, Durin,
 Dayel) render as "not yet" and break nothing. That's the intended way to work.
 
-## Known limits (documented in the README, not bugs)
+## The reading wall
 
-- **A scaffolded book leaks its place names.** All 44 Elfstones places draw a
-  label at zoom >= 2.2, Safehold and the Hollows included. Today it is masked —
-  with no waypoints the camera cannot frame an action box, so it sits at k=1
-  where labels are hidden — but the first waypoints you write will zoom it in
-  and reveal the lot. The reading-position wall in the spec is the fix.
+`readTo` is one integer per book: the last chapter the reader finished, or
+`null` for no wall. A book with `"readAlong": true` defaults to 0 — nothing
+revealed — rather than to the whole novel.
+
+`ceiling()` is the first position NOT read; `readEnd()` is a hair below it and
+is what every "have I seen this" test compares against. That distinction is
+load-bearing: with an inclusive test against the ceiling, "read to chapter 0"
+revealed chapter 1's opening line, and an unguarded `chapters.find(c => c.n === 0)`
+fell through to the end of the book — the worst possible default for the one
+kind of book the feature exists for.
+
+`applyCeiling()` is the single entry point. It re-runs the four
+once-per-book builders, re-derives `loudEvents`, sets the clock ceiling and
+tells the view which places and characters exist. It is NOT called per frame —
+the roster is built once per book on purpose, and rebuilding it every frame is
+what broke clicking.
+
+Nothing is filtered out of the data. The file is whole; the wall only decides
+what gets drawn.
+
+## Known limits (documented in the README, not bugs)
 
 - **The axis is page order, not story time.** Two POV threads narrated one
   after the other make the second character freeze, then jump. Fixing it means

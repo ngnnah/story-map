@@ -51,6 +51,13 @@ export class View {
     // would move in both directions and never settle.
     this.actionBox = null;
     this.autoFramed = false;
+    // Place ids the reader has reached, or null for "no wall". A place name is
+    // a spoiler all by itself — "Safehold" tells you something before you have
+    // earned it — so an unreached place is not drawn at all.
+    this.revealed = null;
+    // Characters the reader has met. `positionsAt` works from the data and
+    // knows nothing about how far they have read, so the wall is applied here.
+    this.revealedWho = null;
     this.onPickCharacter = () => {};
 
     this.defs = el('defs');
@@ -87,6 +94,12 @@ export class View {
     this.fit();          // the caller re-frames once it knows the position
   }
 
+  setRevealed(placeIds, whoIds = null) {
+    this.revealed = placeIds;
+    this.revealedWho = whoIds;
+    if (this.book) this.drawPlaces();
+  }
+
   setImageHref(href) {
     if (href) this.image.setAttribute('href', href);
     else this.image.removeAttribute('href');
@@ -96,6 +109,7 @@ export class View {
     this.gPlaces.replaceChildren();
     this.placeNodes = new Map();
     for (const p of Object.values(this.book.places)) {
+      if (this.revealed && !this.revealed.has(p.id)) continue;
       const g = el('g');
       const dot = el('circle', { class: 'place-dot', cx: p.x * MAP_W, cy: p.y * MAP_W });
       const label = el('text', { class: 'label place', x: p.x * MAP_W, y: p.y * MAP_W });
@@ -246,7 +260,8 @@ export class View {
     // narrowest one, which matters because clustering is single-linkage and a
     // generous radius chains pins that do not actually collide.
     const pinRForDodge = k < 1.3 ? 9 : k < 2.2 ? 11 : 14;
-    const pins = positionsAt(book, page, (2 * pinRForDodge) * u / MAP_W);
+    let pins = positionsAt(book, page, (2 * pinRForDodge) * u / MAP_W);
+    if (this.revealedWho) pins = pins.filter((p) => this.revealedWho.has(p.who));
     const byWho = new Map(pins.map((p) => [p.who, p]));
     const raised = this.focus || this.hover;
 
@@ -262,6 +277,7 @@ export class View {
     const trailFrags = [];
     for (const ch of book.characters) {
       if (this.hidden?.has(ch.id)) continue;
+      if (this.revealedWho && !this.revealedWho.has(ch.id)) continue;
       const dim = raised && raised !== ch.id;
       const bands = bandTrails(book, ch.id, page, HOT, WARM);
       const spec = [
@@ -307,6 +323,7 @@ export class View {
     // there however you arrived at this page.
     this.exited.clear();
     for (const ch of book.characters) {
+      if (this.revealedWho && !this.revealedWho.has(ch.id)) continue;
       const wps = book.byCharacter[ch.id] || [];
       for (let i = 0; i < wps.length; i++) {
         if (wps[i].place || wps[i].page > page) continue;

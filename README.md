@@ -44,6 +44,18 @@ npm test           # 79 tests, no dependencies
 Drag the map to pan, scroll to zoom, `⌥`-click a character in the roster to
 hide them.
 
+## Reading along
+
+Type the last chapter you finished into **Read to ch.** in the bottom bar and
+the app refuses to show you anything past it. The slider stops there, later
+chapters go blank, the event ticks and the lane strip clip, characters you have
+not met are not listed, and a place nobody has reached yet is not drawn — a
+place name is a spoiler on its own. `all` lifts the wall for a re-read. The
+number is remembered per book.
+
+Everything the app knows stays in the file. The wall is a filter on what is
+drawn, not on what is loaded, so nothing is lost by setting it.
+
 ## Writing a book
 
 One JSON file per book. The whole schema:

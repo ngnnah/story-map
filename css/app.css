@@ -305,6 +305,31 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 #transport .spacer { flex: 1; }
+
+/* Reading progress: the last chapter you finished. Everything past it is
+   withheld, so a finished dataset cannot spoil a book you are part-way
+   through. */
+.readto { display: flex; align-items: center; gap: 6px; color: var(--text); }
+.readto input {
+  width: 4.5em; text-align: right; font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.readto input::-webkit-outer-spin-button,
+.readto input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.readto .ghost { padding: 7px 8px; color: var(--dim); }
+.readto .ghost:hover { color: var(--text); }
+.readto.off #readto-label, .readto.off input { opacity: 0.55; }
+body.walled #readto-wrap .ghost { border-color: var(--accent); color: var(--text); }
+
+/* The stretch of rail you have not read yet. */
+#rail .beyond {
+  position: absolute; height: 8px; border-radius: 0 4px 4px 0;
+  background: repeating-linear-gradient(135deg,
+    var(--bg) 0 3px, var(--bg-3) 3px 6px);
+  opacity: 0.9; pointer-events: none;
+}
+.chap.locked { color: var(--mute); background: var(--bg-2); cursor: default; }
+.chap.locked .t { display: none; }
 #transport .page { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
 
 /* --------------------------------------------------------------- popovers */

@@ -44,6 +44,10 @@ let hidden = new Set();
 let objectUrl = null;
 let laneOn = pref('lanes', true);
 let scrimStep = pref('scrim', 1);
+// The last chapter the reader has finished, or null for "show me everything".
+// Everything the app knows stays in the file; the UI simply refuses to render
+// past this. One number, persisted per book.
+let readTo = null;
 let announceQueue = [];
 let lastAnnounce = -1e9;
 const firedThisPass = new Set();
@@ -71,14 +75,20 @@ async function loadBook(raw, { imageBlob } = {}) {
   clock.seek(saved && saved.axis === book.axis && isFinite(saved.at) ? saved.at : book.pages[0]);
   // Point the camera at the part of the map this story uses, now that we know
   // how far in the reader is.
-  view.noteAction(visitedBox(book, clock.target));
+  view.noteAction(visitedBox(book, Math.min(clock.target, readEnd())));
   view.frameAction();
 
   showProblems(problems);
+  // A book that says readAlong starts walled at chapter 0 — nothing revealed —
+  // rather than showing the reader a novel they have not opened.
+  const savedTo = pref(`readTo:${book.id}`, undefined);
+  readTo = savedTo !== undefined ? savedTo : (raw.readAlong ? 0 : null);
+  $('readto').max = book.chapters.at(-1)?.n ?? 1;
   buildRoster();
   buildChapters();
   buildLanes();
   buildGutter();
+  applyCeiling();
   $('page-of').textContent = onChapters() ? '' : `/ ${book.pages[1]}`;
   $('rail').setAttribute('aria-valuemin', book.pages[0]);
   $('rail').setAttribute('aria-valuemax', book.pages[1]);
@@ -131,12 +141,89 @@ function showProblems(list, append = false) {
   $('problem-count').textContent = `⚠ ${n} note${n === 1 ? '' : 's'} about this book`;
 }
 
+// ------------------------------------------------- how far the reader is
+
+/** The furthest position that may be drawn, in axis units. */
+function ceiling() {
+  if (!book) return Infinity;
+  if (readTo === null) return book.pages[1];
+  const ch = book.chapters.find((c) => c.n === readTo);
+  // readTo 0 means "I have not started", and a number past the last chapter
+  // means the reader is done. Falling back to the end of the book for BOTH —
+  // which is what an unguarded find() does — would silently unwall a book the
+  // reader has not opened. Nothing revealed is the safe side of this.
+  if (!ch) return readTo <= 0 ? book.pages[0] : book.pages[1];
+  const next = book.chapters[book.chapters.indexOf(ch) + 1];
+  return next ? next.start : book.pages[1];      // the end of that chapter
+}
+
+const walled = () => readTo !== null;
+
+/**
+ * The last position the reader has actually read. `ceiling()` is the first
+ * position they have NOT — the boundary they may scrub to but not past — so
+ * everything that asks "have I seen this" compares against this instead, and
+ * "read to chapter 0" reveals nothing rather than chapter 1's opening line.
+ */
+const readEnd = () => (walled() ? ceiling() - 1e-9 : book.pages[1]);
+/** Has this character appeared by the wall? */
+const shown = (id) => {
+  const w = (book.byCharacter[id] || [])[0];
+  return !!w && w.page <= readEnd();
+};
+/** Events the reader has reached. */
+const seenEvents = () => (walled() ? events.filter((e) => e.page <= readEnd()) : events);
+
+/**
+ * Rebuild everything the wall filters. Called on load and whenever the reader
+ * moves it — never per frame: the roster, chapter strip, lane strip and gutter
+ * are built once per book on purpose, and rebuilding the roster every frame is
+ * what broke clicking in the first place.
+ */
+function applyCeiling() {
+  if (!book) return;
+  const top = ceiling();
+  clock.setCeiling(walled() ? top : null);
+  clock.setLoudPages(seenEvents().filter((e) => LOUD.has(e.kind)).map((e) => e.page));
+  loudEvents = seenEvents().filter((e) => LOUD.has(e.kind));
+  buildRoster();
+  buildChapters();
+  buildLanes();
+  buildGutter();
+  view.setRevealed(
+    walled() ? visitedPlaces(readEnd()) : null,
+    walled() ? new Set(book.characters.filter((c) => shown(c.id)).map((c) => c.id)) : null,
+  );
+  document.body.classList.toggle('walled', walled());
+  $('readto-wrap').classList.toggle('off', !walled());
+  $('readto').value = walled() ? readTo : '';
+  if (clock.shown > top) clock.jumpTo(top);
+  view.noteAction(visitedBox(book, readEnd()));
+}
+
+/** Place ids anyone has reached by `upTo`. */
+function visitedPlaces(upTo) {
+  const out = new Set();
+  for (const w of book.waypoints) if (w.place && w.page <= upTo) out.add(w.place);
+  return out;
+}
+
+function setReadTo(v) {
+  const n = Number(v);
+  readTo = v === '' || v === null || !Number.isFinite(n)
+    ? null
+    : Math.min(Math.max(Math.round(n), 0), book.chapters.at(-1)?.n ?? 1);
+  setPref(`readTo:${book.id}`, readTo);
+  applyCeiling();
+  view.frameAction();
+}
+
 // ------------------------------------------------------------- the frame
 
 function frame(page, prev, dt) {
   // Widen the remembered region as the reader goes. This does not move the
   // camera — frameAction does, and only on an explicit trigger.
-  view.noteAction(visitedBox(book, page));
+  view.noteAction(visitedBox(book, Math.min(page, readEnd())));
   const pins = view.render(page, dt);
   drawRail(page);
   drawRoster(page, pins);
@@ -157,7 +244,10 @@ let rosterNodes = new Map();
 function buildRoster() {
   rosterNodes = new Map();
   const frag = document.createDocumentFragment();
+  // A character who has not appeared yet is not listed at all. Listing them as
+  // "not yet" tells you they exist, which for an unread book is the spoiler.
   for (const c of book.characters) {
+    if (walled() && !shown(c.id)) continue;
     const row = document.createElement('div');
     row.className = 'who';
     row.style.color = c.color;
@@ -280,7 +370,17 @@ function buildChapters() {
     t.className = 't';
     t.textContent = c.title;
     d.append(num, t);
-    d.addEventListener('click', () => clock.jumpTo(c.start));
+    if (walled() && c.start >= ceiling()) {
+      // Past the wall. The number stays — how much book is left is not a
+      // spoiler and is useful — but the title and the jump do not.
+      d.classList.add('locked');
+      d.setAttribute('aria-label', `Chapter ${c.n}, not read yet`);
+      d.removeAttribute('role');
+      d.tabIndex = -1;
+      t.textContent = '';
+    } else {
+      d.addEventListener('click', () => clock.jumpTo(c.start));
+    }
     host.append(d);
   });
 }
@@ -297,7 +397,8 @@ function buildLanes() {
   svg.style.display = laneOn ? '' : 'none';
   if (!laneOn) return;
 
-  const n = book.characters.length;
+  const cast = book.characters.filter((c) => !walled() || shown(c.id));
+  const n = Math.max(cast.length, 1);
   const rowH = 5;
   const H = n * rowH;
   svg.setAttribute('viewBox', `0 0 1000 ${H}`);
@@ -306,15 +407,16 @@ function buildLanes() {
 
   const span = book.pages[1] - book.pages[0];
   const X = (p) => ((p - book.pages[0]) / span) * 1000;
+  const top = readEnd();
 
-  book.characters.forEach((c, i) => {
+  cast.forEach((c, i) => {
     const y = i * rowH + rowH / 2;
     const wps = book.byCharacter[c.id] || [];
     if (!wps.length) return;
 
     // Travelling: the thin line between first and last waypoint.
     svg.append(el('line', {
-      class: 'lane-move', x1: X(wps[0].page), x2: X(wps.at(-1).page), y1: y, y2: y,
+      class: 'lane-move', x1: X(wps[0].page), x2: X(Math.min(wps.at(-1).page, top)), y1: y, y2: y,
       stroke: c.color, 'stroke-width': 1,
     }));
 
@@ -322,16 +424,17 @@ function buildLanes() {
       // Anything past the last authored waypoint is the "holds position" rule
       // extrapolating, not something the book said. Draw it faint so a
       // half-written dataset does not masquerade as a finished one.
-      const solidTo = Math.min(s.to, wps.at(-1).page);
+      const solidTo = Math.min(s.to, wps.at(-1).page, top);
+      if (s.from > top) continue;
       if (solidTo > s.from) {
         svg.append(el('line', {
           class: 'lane-stay', x1: X(s.from), x2: X(solidTo), y1: y, y2: y,
           stroke: c.color, 'stroke-width': 3, opacity: 0.9,
         }));
       }
-      if (s.to > solidTo) {
+      if (Math.min(s.to, top) > solidTo) {
         svg.append(el('line', {
-          class: 'lane-stay', x1: X(solidTo), x2: X(s.to), y1: y, y2: y,
+          class: 'lane-stay', x1: X(solidTo), x2: X(Math.min(s.to, top)), y1: y, y2: y,
           stroke: c.color, 'stroke-width': 3, opacity: 0.18,
         }));
       }
@@ -340,9 +443,10 @@ function buildLanes() {
 
   // Co-presence bridges, taken straight from the meetings the model already
   // found — one hairline per meeting rather than one per sampled page.
-  for (const e of events) {
+  const laneOf = new Map(cast.map((c, i) => [c.id, i]));
+  for (const e of seenEvents()) {
     if (e.kind !== 'meet') continue;
-    const lanes = e.who.map((w) => book.charIndex[w]).filter((n) => n !== undefined).sort((a, b) => a - b);
+    const lanes = e.who.map((w) => laneOf.get(w)).filter((n) => n !== undefined).sort((a, b) => a - b);
     if (lanes.length < 2) continue;
     svg.append(el('line', {
       class: 'bridge', x1: X(e.page), x2: X(e.page),
@@ -354,7 +458,7 @@ function buildLanes() {
   head.id = 'lane-head';
   svg.append(head);
 
-  book.characters.forEach((c, i) => {
+  cast.forEach((c, i) => {
     const hit = el('rect', { class: 'lane-row', x: 0, y: i * rowH, width: 1000, height: rowH });
     hit.addEventListener('pointerenter', () => { view.hover = c.id; });
     hit.addEventListener('pointerleave', () => { if (view.hover === c.id) view.hover = null; });
@@ -374,7 +478,7 @@ function buildGutter() {
   // Bucket into 3px bins: a bin with more than one event draws a single tick
   // with a cap above it, rather than a jittering pile.
   const bins = new Map();
-  for (const e of events) {
+  for (const e of seenEvents()) {
     const b = Math.round(X(e.page) / 3);
     (bins.get(b) ?? bins.set(b, []).get(b)).push(e);
   }
@@ -410,6 +514,22 @@ function drawRail(page) {
   const ch = chapterAt(book, page);
   $('rail').setAttribute('aria-valuetext',
     `page ${Math.round(page)}${ch ? `, chapter ${ch.n}${ch.title ? `, ${ch.title}` : ''}` : ''}`);
+
+  // The stretch you have not read, hatched and dead.
+  let beyond = $('rail').querySelector('.beyond');
+  if (walled()) {
+    if (!beyond) {
+      beyond = document.createElement('div');
+      beyond.className = 'beyond';
+      $('rail').append(beyond);
+    }
+    const stop = ((ceiling() - book.pages[0]) / span) * 100;
+    beyond.style.left = `${stop}%`;
+    beyond.style.right = '0';
+    beyond.hidden = stop >= 100;
+  } else if (beyond) {
+    beyond.hidden = true;
+  }
 
   const head = $('lane-head');
   if (head) { head.setAttribute('x1', pct * 10); head.setAttribute('x2', pct * 10); }
@@ -613,7 +733,7 @@ function showPopover(clientX) {
   const page = railPage(clientX);
   const pop = $('pop');
   const span = book.pages[1] - book.pages[0];
-  const near = events
+  const near = seenEvents()
     .filter((e) => Math.abs(e.page - page) <= 0.008 * span)
     .sort((a, b) => (LOUD.has(b.kind) ? 1 : 0) - (LOUD.has(a.kind) ? 1 : 0))
     .slice(0, 4);
@@ -692,6 +812,13 @@ function hidePopover() {
 $('play').addEventListener('click', () => clock.toggle());
 $('speed').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(clock.speed) + 1) % SPEEDS.length]));
 $('fit-btn').addEventListener('click', () => view.toggleFrame());
+$('readto').addEventListener('change', (e) => setReadTo(e.target.value));
+$('readto').addEventListener('keydown', (e) => {
+  e.stopPropagation();                       // the window handler owns these keys
+  if (e.key === 'Enter') setReadTo(e.target.value);
+});
+$('readto-all').addEventListener('click', () => setReadTo(''));
+
 $('scrim-btn').addEventListener('click', cycleScrim);
 $('help-btn').addEventListener('click', () => { $('help').hidden = !$('help').hidden; });
 $('help').addEventListener('click', () => { $('help').hidden = true; });
@@ -724,7 +851,7 @@ addEventListener('keydown', (e) => {
     ArrowLeft: () => (e.altKey ? hopWaypoint(-1) : clock.seek(clock.target - step, mode)),
     ArrowRight: () => (e.altKey ? hopWaypoint(1) : clock.seek(clock.target + step, mode)),
     Home: () => clock.jumpTo(book.pages[0]),
-    End: () => clock.jumpTo(book.pages[1]),
+    End: () => clock.jumpTo(ceiling()),
     '[': () => (e.shiftKey ? hopEvent(-1) : hopChapter(-1)),
     ']': () => (e.shiftKey ? hopEvent(1) : hopChapter(1)),
     '{': () => hopEvent(-1),
