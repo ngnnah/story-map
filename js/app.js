@@ -194,10 +194,9 @@ function applyCeiling() {
     walled() ? new Set(book.characters.filter((c) => shown(c.id)).map((c) => c.id)) : null,
   );
   document.body.classList.toggle('walled', walled());
-  $('readto-wrap').classList.toggle('off', !walled());
-  $('readto-all').textContent = walled() ? 'all' : 'wall';
-  $('readto-all').title = walled() ? 'Show the whole book' : 'Hide what you have not read';
-  $('readto-label').textContent = walled() ? `Read to ch. ${readTo}` : 'Read to ch. —';
+  $('readto-wrap').hidden = !walled();
+  $('readto-all').hidden = walled();
+  $('readto-label').textContent = `Read to ch. ${readTo}`;
   const wall = $('wall');
   wall.hidden = !walled();
   wall.setAttribute('aria-valuemin', 0);
@@ -532,9 +531,12 @@ function drawRail(page) {
     beyond.hidden = stop >= 100;
     wall.style.left = `${stop}%`;
     wall.hidden = false;
+    const tip = $('rail').querySelector('.wall-hint');
+    if (tip) tip.style.left = `${stop}%`;
   } else {
     beyond.hidden = true;
     wall.hidden = true;
+    $('rail').querySelector('.wall-hint')?.remove();   // no handle, no pointer at it
   }
 
   const head = $('lane-head');
@@ -844,6 +846,7 @@ function wallChapterAt(clientX) {
 
 wallEl.addEventListener('pointerdown', (e) => {
   e.stopPropagation();                      // not a scrub
+  rail.querySelector('.wall-hint')?.remove();
   wallDrag = true;
   rail.classList.add('wall-dragging');
   wallEl.setPointerCapture(e.pointerId);
@@ -870,7 +873,33 @@ wallEl.addEventListener('keydown', (e) => {
 
 // Clicking the empty rail while walled sets the wall, not the playhead, only
 // if you grabbed the handle — otherwise the rail keeps its old job.
-$('readto-all').addEventListener('click', () => setReadTo(walled() ? '' : 0));
+/**
+ * Turning the wall on mid-session starts it at the chapter you are looking at,
+ * not at zero. Dropping straight to zero blanks the map, the roster and the
+ * rail in one go, which reads as the app breaking rather than a filter turning
+ * on. A book that asks for `readAlong` still opens at zero — that is a fresh
+ * read, and there the empty map is the truth.
+ */
+$('readto-all').addEventListener('click', () => {
+  const here = chapterAt(book, clock.shown);
+  setReadTo(here ? here.n : 0);
+  showWallHint();
+});
+$('readto-off').addEventListener('click', () => setReadTo(''));
+
+/** Point at the handle the first time the wall goes up for this book. */
+let hintTimer = null;
+function showWallHint() {
+  const old = rail.querySelector('.wall-hint');
+  if (old) old.remove();
+  clearTimeout(hintTimer);
+  const tip = document.createElement('div');
+  tip.className = 'wall-hint';
+  tip.textContent = 'drag me to where you have read';
+  tip.style.left = $('wall').style.left || '0%';
+  rail.append(tip);
+  hintTimer = setTimeout(() => tip.remove(), 4000);
+}
 
 $('scrim-btn').addEventListener('click', cycleScrim);
 $('help-btn').addEventListener('click', () => { $('help').hidden = !$('help').hidden; });

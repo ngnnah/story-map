@@ -310,11 +310,22 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    withheld, so a finished dataset cannot spoil a book you are part-way
    through. */
 .readto { display: flex; align-items: center; gap: 6px; color: var(--text); }
-.readto #readto-label { font-variant-numeric: tabular-nums; }
-.readto .ghost { padding: 7px 8px; color: var(--dim); }
+.readto {
+  border: 1px solid var(--accent); border-radius: 6px; padding: 0 0 0 10px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-4));
+}
+.readto #readto-label { font-variant-numeric: tabular-nums; font-weight: 600; }
+.readto .ghost { padding: 7px 9px; color: var(--dim); border: 0; }
 .readto .ghost:hover { color: var(--text); }
-.readto.off #readto-label, .readto.off input { opacity: 0.55; }
-body.walled #readto-wrap .ghost { border-color: var(--accent); color: var(--text); }
+
+/* The handle is small and lives on a busy rail, so the first time the wall
+   goes up it says where to look. Fades once the reader has dragged it. */
+#rail .wall-hint {
+  position: absolute; bottom: 26px; transform: translateX(-50%);
+  background: var(--bg-3); border: 1px solid var(--accent); border-radius: 6px;
+  padding: 4px 8px; font-size: 11px; white-space: nowrap; color: var(--text);
+  pointer-events: none; z-index: 4; animation: chip-in 160ms var(--e-out);
+}
 
 /* The stretch of rail you have not read yet, and the handle that sets it.
    A hollow handle for the wall, a solid one for where you are looking: the
