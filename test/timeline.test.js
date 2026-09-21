@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseBook, polylineFor } from '../js/book.js';
-import { positionsAt, trailUpTo, presence, storyEvents, legEase, bandTrails } from '../js/timeline.js';
+import { positionsAt, trailUpTo, presence, storyEvents, legEase, bandTrails, visitedBox } from '../js/timeline.js';
 import { length, pointAt } from '../js/geometry.js';
 
 const demoRaw = JSON.parse(
@@ -557,4 +557,44 @@ test('positionsAt passes a crowding radius through to dodge', () => {
   assert.deepEqual(positionsAt(b, 50).map((p) => p.crowd), [1, 1]);
   assert.deepEqual(positionsAt(b, 50, 0.01).map((p) => p.crowd), [2, 2]);
   assert.ok(positionsAt(b, 50, 0.01).every((p) => p.off), 'both should get an offset');
+});
+
+// --- the region the story actually uses ------------------------------------
+
+test('visitedBox covers the places reached, and no others', () => {
+  const b = makeBook([
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'a', page: 50, place: 'south' },
+  ]);
+  const box = visitedBox(b);
+  near(box.x0, 0.5); near(box.x1, 0.5);
+  near(box.y0, 0.2); near(box.y1, 0.8);
+  assert.equal(box.n, 2);
+  // `east` is declared in the fixture but nobody goes there.
+  assert.ok(box.x1 < 0.9, 'an unvisited place must not widen the box');
+});
+
+test('visitedBox grows as the reader advances', () => {
+  const b = makeBook([
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'a', page: 50, place: 'south' },
+    { who: 'a', page: 80, place: 'east' },
+  ]);
+  assert.equal(visitedBox(b, 10).n, 1);
+  assert.equal(visitedBox(b, 50).n, 2);
+  assert.equal(visitedBox(b, 80).n, 3);
+  assert.ok(visitedBox(b, 80).x1 > visitedBox(b, 50).x1);
+});
+
+test('visitedBox is null before anyone has been anywhere', () => {
+  const b = makeBook([{ who: 'a', page: 10, place: 'north' }]);
+  assert.equal(visitedBox(b, 5), null);
+});
+
+test('a character who never lands anywhere does not widen the box', () => {
+  const b = makeBook([
+    { who: 'a', page: 10, place: 'north' },
+    { who: 'b', page: 20, place: null },
+  ]);
+  assert.equal(visitedBox(b).n, 1);
 });

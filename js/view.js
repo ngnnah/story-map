@@ -11,6 +11,14 @@ import { ICON_BOX, ICON_FILL, iconPath } from './icons.js';
 const NS = 'http://www.w3.org/2000/svg';
 const MAP_W = 1000;
 
+// Framing the part of the map the story uses. A continent-wide endpaper with
+// the action in one corner is unreadable at whole-map zoom — but a box drawn
+// tight round two villages is worse, because it tells you nothing about where
+// those villages ARE, which is the whole point of a story map.
+const ACTION_PAD = 1.15;
+const ACTION_MIN_SPAN = 0.30;   // never frame less than this fraction of the width
+const ACTION_MAX_K = 3;
+
 const el = (tag, attrs = {}) => {
   const n = document.createElementNS(NS, tag);
   for (const k in attrs) n.setAttribute(k, attrs[k]);
@@ -38,6 +46,11 @@ export class View {
     this.seen = new Set();             // characters that have had their debut
     this.exited = new Map();           // who -> {x, y, heading} for terminal ticks
     this.labelSlots = new Map();
+    // The widest region the story has used so far. It only ever grows: a
+    // camera that crept inward whenever everyone happened to be in one town
+    // would move in both directions and never settle.
+    this.actionBox = null;
+    this.autoFramed = false;
     this.onPickCharacter = () => {};
 
     this.defs = el('defs');
@@ -63,6 +76,7 @@ export class View {
     this.scrim.setAttribute('width', MAP_W);
     this.scrim.setAttribute('height', this.mapH);
     this.dodgeOffsets.clear();
+    this.actionBox = null;
     this.seen.clear();
     this.exited.clear();
     this.labelSlots.clear();
@@ -70,7 +84,7 @@ export class View {
     this.gPins.replaceChildren();
     this.gFx.replaceChildren();
     this.drawPlaces();
-    this.fit();
+    this.fit();          // the caller re-frames once it knows the position
   }
 
   setImageHref(href) {
@@ -118,10 +132,51 @@ export class View {
   fit() {
     this.cam = { cx: MAP_W / 2, cy: this.mapH / 2, k: 1 };
     this.following = null;
+    this.autoFramed = false;
     this.applyCamera();
   }
 
+  /**
+   * Widen the remembered action box to include `box`. Never narrows — see the
+   * note on `actionBox`.
+   */
+  noteAction(box) {
+    if (!box) return;
+    const a = this.actionBox;
+    this.actionBox = a
+      ? {
+        x0: Math.min(a.x0, box.x0), y0: Math.min(a.y0, box.y0),
+        x1: Math.max(a.x1, box.x1), y1: Math.max(a.y1, box.y1),
+      }
+      : { x0: box.x0, y0: box.y0, x1: box.x1, y1: box.y1 };
+  }
+
+  /**
+   * Point the camera at the action box. Called when the revealed region
+   * changes — on load, and when the reader unlocks a chapter — never per
+   * frame and never mid-scrub: a camera that re-frames while you drag the
+   * rail is exactly the motion `followStep`'s dead zone exists to avoid.
+   */
+  frameAction() {
+    const b = this.actionBox;
+    if (!b) { this.fit(); return; }
+    const w = Math.max((b.x1 - b.x0) * ACTION_PAD, ACTION_MIN_SPAN);
+    const h = Math.max((b.y1 - b.y0) * ACTION_PAD, ACTION_MIN_SPAN * this.book.map.aspect);
+    const k = clamp(Math.min(1 / w, this.mapH / MAP_W / h), 1, ACTION_MAX_K);
+    this.cam = { cx: ((b.x0 + b.x1) / 2) * MAP_W, cy: ((b.y0 + b.y1) / 2) * MAP_W, k };
+    this.following = null;
+    this.autoFramed = k > 1;
+    this.applyCamera();
+  }
+
+  /** `R`: the action, then the whole map, then the action again. */
+  toggleFrame() {
+    if (this.autoFramed) this.fit();
+    else this.frameAction();
+  }
+
   zoomAt(factor, clientX, clientY) {
+    this.autoFramed = false;
     const before = this.toWorld(clientX, clientY);
     this.cam.k = clamp(this.cam.k * factor, 1, 8);
     this.applyCamera();
@@ -132,6 +187,7 @@ export class View {
   }
 
   panBy(dxPx, dyPx) {
+    this.autoFramed = false;
     const { u } = this.metrics();
     this.cam.cx -= dxPx * u;
     this.cam.cy -= dyPx * u;
@@ -279,11 +335,15 @@ export class View {
     const { u, pinR, showMonograms, clusterAt, raised, dt } = opts;
     this.pinNodes ??= new Map();
 
-    // Group by place so a crowd can collapse into one puck.
+    // Group by the cluster `dodge` already worked out, not by exact coordinate
+    // equality. Re-deriving it here from `toFixed(4)` meant pins at nearby but
+    // different places were never counted as a crowd: they got a fan offset
+    // from dodge and then a fan radius of zero from this, so they drew on top
+    // of one another and never collapsed into a puck either.
     const crowds = new Map();
     for (const p of pins) {
       if (this.hidden?.has(p.who)) continue;
-      const key = `${p.x.toFixed(4)},${p.y.toFixed(4)}`;
+      const key = p.cluster ?? `${p.x.toFixed(4)},${p.y.toFixed(4)}`;
       (crowds.get(key) ?? crowds.set(key, []).get(key)).push(p);
     }
 

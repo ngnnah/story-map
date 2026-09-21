@@ -167,6 +167,11 @@ export function dodge(pins, radius = COINCIDENT) {
   for (let i = 0; i < n; i++) {
     const r = root(i);
     const crowd = size[r];
+    // `cluster` names the group. The renderer needs it to decide how far apart
+    // to fan and when to collapse a crowd into one puck, and it cannot work
+    // that out from `crowd` alone — two separate groups of three share a
+    // count. It is an index into the input, so it is stable for a stable set.
+    out[i].cluster = r;
     if (crowd < 2) continue;
     const angle = -Math.PI / 2 + (slot[r]++ * 2 * Math.PI) / crowd;
     out[i].off = { dx: Math.cos(angle), dy: Math.sin(angle) };

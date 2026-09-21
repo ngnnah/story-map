@@ -310,6 +310,34 @@ export function storyEvents(book) {
   return events;
 }
 
+/**
+ * The bounding box, in square map space, of every place anyone has actually
+ * been at or before `upTo`. This is the part of the map the story is using —
+ * for a book whose action sits in one corner of a continent-wide map, it is a
+ * small fraction of the image, and framing it is the difference between a
+ * legible map and a smudge.
+ *
+ * Only visited places count. The file may list somewhere nobody reaches for
+ * three hundred pages, and drawing the camera out to include it would frame
+ * emptiness — and, for a reader part-way through, would quietly reveal how far
+ * the story is going to travel.
+ */
+export function visitedBox(book, upTo = Infinity) {
+  let x0 = Infinity; let y0 = Infinity; let x1 = -Infinity; let y1 = -Infinity;
+  let n = 0;
+  for (const w of book.waypoints) {
+    if (!w.place || w.page > upTo) continue;
+    const p = book.places[w.place];
+    if (!p) continue;
+    n++;
+    if (p.x < x0) x0 = p.x;
+    if (p.x > x1) x1 = p.x;
+    if (p.y < y0) y0 = p.y;
+    if (p.y > y1) y1 = p.y;
+  }
+  return n ? { x0, y0, x1, y1, n } : null;
+}
+
 function distance(line) {
   let d = 0;
   for (let i = 1; i < line.length; i++) {

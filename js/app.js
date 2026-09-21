@@ -3,7 +3,7 @@
 // the pure modules and is tested there.
 
 import { parseBook, chapterAt } from './book.js';
-import { positionsAt, presence, storyEvents } from './timeline.js';
+import { positionsAt, presence, storyEvents, visitedBox } from './timeline.js';
 import { Clock, clamp } from './clock.js';
 import { View } from './view.js';
 import { putImage, getImage, pref, setPref } from './store.js';
@@ -68,6 +68,10 @@ async function loadBook(raw, { imageBlob } = {}) {
   // the worst possible thing to open on.
   const saved = pref(`page:${book.id}`, null);
   clock.seek(saved && saved.axis === book.axis && isFinite(saved.at) ? saved.at : book.pages[0]);
+  // Point the camera at the part of the map this story uses, now that we know
+  // how far in the reader is.
+  view.noteAction(visitedBox(book, clock.target));
+  view.frameAction();
 
   showProblems(problems);
   buildRoster();
@@ -129,6 +133,9 @@ function showProblems(list, append = false) {
 // ------------------------------------------------------------- the frame
 
 function frame(page, prev, dt) {
+  // Widen the remembered region as the reader goes. This does not move the
+  // camera — frameAction does, and only on an explicit trigger.
+  view.noteAction(visitedBox(book, page));
   const pins = view.render(page, dt);
   drawRail(page);
   drawRoster(page, pins);
@@ -594,7 +601,7 @@ viewport.addEventListener('wheel', (e) => {
   e.preventDefault();
   view.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY);
 }, { passive: false });
-viewport.addEventListener('dblclick', () => view.fit());
+viewport.addEventListener('dblclick', () => view.toggleFrame());
 view.onPickCharacter = pickCharacter;
 
 addEventListener('resize', () => view.applyCamera());
@@ -683,7 +690,7 @@ function hidePopover() {
 
 $('play').addEventListener('click', () => clock.toggle());
 $('speed').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(clock.speed) + 1) % SPEEDS.length]));
-$('fit-btn').addEventListener('click', () => view.fit());
+$('fit-btn').addEventListener('click', () => view.toggleFrame());
 $('scrim-btn').addEventListener('click', cycleScrim);
 $('help-btn').addEventListener('click', () => { $('help').hidden = !$('help').hidden; });
 $('help').addEventListener('click', () => { $('help').hidden = true; });
@@ -724,7 +731,7 @@ addEventListener('keydown', (e) => {
     f: () => { view.following = view.following ? null : view.focus; },
     l: () => { laneOn = !laneOn; setPref('lanes', laneOn); buildLanes(); },
     m: cycleScrim,
-    r: () => view.fit(),
+    r: () => view.toggleFrame(),
     '0': () => { view.focus = null; view.following = null; },
     '+': () => zoomCentre(1.25),
     '=': () => zoomCentre(1.25),

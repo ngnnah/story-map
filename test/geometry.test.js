@@ -231,3 +231,22 @@ test('dodge without a radius still means coincidence, as it always has', () => {
   assert.equal(out[2].off, null);
   assert.deepEqual(out.map((p) => p.id), ['a', 'b', 'c']);
 });
+
+test('dodge names each cluster so the renderer can group by it', () => {
+  const pins = [
+    { who: 'a', x: 0.10, y: 0.10 },
+    { who: 'b', x: 0.101, y: 0.10 },   // with a
+    { who: 'c', x: 0.80, y: 0.80 },
+    { who: 'd', x: 0.801, y: 0.80 },   // with c
+    { who: 'e', x: 0.50, y: 0.50 },    // alone
+  ];
+  const out = dodge(pins, 0.01);
+  const id = (w) => out.find((p) => p.who === w).cluster;
+  assert.equal(id('a'), id('b'));
+  assert.equal(id('c'), id('d'));
+  assert.notEqual(id('a'), id('c'), 'two separate pairs must not share a cluster');
+  assert.notEqual(id('a'), id('e'));
+  // Two groups of two: `crowd` alone cannot tell them apart, which is the point.
+  assert.equal(out.find((p) => p.who === 'a').crowd, 2);
+  assert.equal(out.find((p) => p.who === 'c').crowd, 2);
+});
